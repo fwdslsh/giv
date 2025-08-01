@@ -1,0 +1,280 @@
+name: Release
+permissions:
+  contents: write
+  packages: write
+    
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        type: string
+      publish_pypi:
+        description: 'Publish to PyPI'
+        required: false
+        type: boolean
+        default: true
+      publish_test_pypi:
+        description: 'Publish to Test PyPI'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-binaries:
+    uses: ./.github/workflows/build-binaries.yml
+    
+  build-packages:
+    runs-on: ubuntu-latest
+    needs: [build-binaries]  # Wait for binaries to be built first
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.4.1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    
+    - name: Install dependencies
+      run: poetry install
+    
+    - name: Build PyPI packages
+      run: poetry build
+    
+    - name: Upload PyPI packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: pypi-packages
+        path: dist/*.whl
+        retention-days: 30
+    
+    - name: Publish to Test PyPI
+      if: contains(github.ref, '-') || github.event_name == 'workflow_dispatch' && github.event.inputs.publish_test_pypi == 'true'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      run: |
+        if [[ -n "$TWINE_PASSWORD" ]]; then
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry publish --repository testpypi
+        else
+          echo "WARNING: TEST_PYPI_API_TOKEN not found, skipping Test PyPI publish"
+        fi
+    
+    - name: Publish to PyPI
+      if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') && (github.event.inputs.publish_pypi == 'true' || github.event.inputs.publish_pypi == '')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        if [[ -n "$TWINE_PASSWORD" ]]; then
+          poetry publish
+        else
+          echo "WARNING: PYPI_API_TOKEN not found, skipping PyPI publish"
+        fi
+  
+  generate-package-configs:
+    runs-on: ubuntu-latest
+    needs: [build-binaries]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.4.1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    
+    - name: Install dependencies
+      run: poetry install
+    
+    - name: Download all binary artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+    
+    - name: Organize artifacts
+      run: |
+        VERSION="${{ github.ref_name }}"
+        if [[ "$VERSION" == refs/tags/v* ]]; then
+          VERSION="${VERSION#refs/tags/v}"
+        elif [[ "${{ github.event.inputs.version }}" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        fi
+        
+        echo "Organizing artifacts for version: $VERSION"
+        echo "Downloaded artifacts:"
+        ls -la artifacts/
+        
+        # Create dist directory for binaries (what build scripts expect)
+        mkdir -p dist
+        
+        # Copy binaries to dist/ directory (flat structure expected by build scripts)
+        for artifact_dir in artifacts/giv-*; do
+          if [[ -d "$artifact_dir" ]]; then
+            echo "Processing artifact directory: $artifact_dir"
+            ls -la "$artifact_dir/"
+            
+            # Copy all files from artifact directory to dist/
+            cp "$artifact_dir"/* dist/
+          fi
+        done
+        
+        echo "Final dist/ contents:"
+        ls -la dist/
+        
+        # Also create versioned directory structure for release assets
+        mkdir -p "dist/$VERSION"
+        
+        # Copy binaries to versioned structure as well
+        for artifact_dir in artifacts/giv-*; do
+          if [[ -d "$artifact_dir" ]]; then
+            target=$(basename "$artifact_dir" | sed 's/^giv-//')
+            
+            # Handle platform naming consistency for release organization
+            case "$target" in
+              "macos-x86_64")
+                platform="darwin"
+                arch="x86_64"
+                ;;
+              "macos-arm64")
+                platform="darwin"  
+                arch="arm64"
+                ;;
+              *)
+                platform=$(echo "$target" | cut -d'-' -f1)
+                arch=$(echo "$target" | cut -d'-' -f2)
+                ;;
+            esac
+            
+            mkdir -p "dist/$VERSION/$platform-$arch"
+            cp "$artifact_dir"/* "dist/$VERSION/$platform-$arch/"
+          fi
+        done
+        
+        # Generate consolidated checksums file
+        find dist/$VERSION -name "*.sha256" -exec cat {} \; > "dist/$VERSION/checksums.txt"
+    
+    - name: Generate Homebrew formula
+      run: |
+        poetry run python build/homebrew/build.py --create-tap
+    
+    - name: Generate Scoop manifest
+      run: |
+        poetry run python build/scoop/build.py --create-bucket --chocolatey
+    
+    - name: Upload package configs
+      uses: actions/upload-artifact@v4
+      with:
+        name: package-configs
+        path: |
+          dist/*/homebrew-tap/
+          dist/*/scoop-bucket/
+          dist/*/chocolatey/
+        retention-days: 90
+    
+    - name: Create package manager release assets
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/*/homebrew-tap/**/*
+          dist/*/scoop-bucket/**/*
+          dist/*/chocolatey/**/*
+          dist/*/checksums.txt
+        draft: false
+        prerelease: ${{ contains(github.ref, '-') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  create-release-notes:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-binaries, build-packages, generate-package-configs]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        VERSION="${{ github.ref_name }}"
+        VERSION="${VERSION#refs/tags/v}"
+        
+        cat > release_notes.md << EOF
+        # giv CLI v${VERSION}
+        
+        ## Installation
+        
+        ### Binary Downloads
+        
+        Download the appropriate binary for your platform:
+        
+        - **Linux x86_64**: [giv-linux-x86_64](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-linux-x86_64)
+        - **Linux ARM64**: [giv-linux-arm64](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-linux-arm64)
+        - **macOS Intel**: [giv-macos-x86_64](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-macos-x86_64)
+        - **macOS Apple Silicon**: [giv-macos-arm64](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-macos-arm64)
+        - **Windows**: [giv-windows-x86_64.exe](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-windows-x86_64.exe)
+        
+        ### Package Managers
+        
+        \`\`\`bash
+        # Homebrew (macOS/Linux)
+        brew tap giv-cli/tap
+        brew install giv
+        
+        # Scoop (Windows)
+        scoop bucket add giv-cli https://github.com/giv-cli/scoop-bucket
+        scoop install giv
+        
+        # PyPI
+        pip install giv
+        \`\`\`
+        
+        ### Installation Script
+        
+        \`\`\`bash
+        curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
+        \`\`\`
+        
+        ## What's Changed
+        
+        See the [CHANGELOG.md](https://github.com/fwdslsh/giv/blob/main/CHANGELOG.md) for detailed changes.
+        
+        ## Verification
+        
+        All binaries are signed and checksums are provided in [checksums.txt](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/checksums.txt).
+        EOF
+        
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Update release with notes
+      uses: softprops/action-gh-release@v1
+      with:
+        body: ${{ steps.release_notes.outputs.release_notes }}
+        draft: false
+        prerelease: ${{ contains(github.ref, '-') }}
