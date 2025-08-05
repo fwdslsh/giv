@@ -199,9 +199,10 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          dist/*/homebrew-tap/**/*
-          dist/*/scoop-bucket/**/*
-          dist/*/chocolatey/**/*
+          dist/*/homebrew-tap/Formula/giv.rb
+          dist/*/scoop-bucket/bucket/giv.json
+          dist/*/chocolatey/*.nuspec
+          dist/*/chocolatey/*.ps1
           dist/*/checksums.txt
         draft: false
         prerelease: ${{ contains(github.ref, '-') }}
