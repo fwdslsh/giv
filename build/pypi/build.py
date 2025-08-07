@@ -53,7 +53,7 @@ class PyPIBuilder:
         ensure_dir(output_dir)
         
         # Use Poetry to build packages
-        cmd = ["poetry", "build", "--output", str(output_dir)]
+        cmd = ["poetry", "build"]
         
         try:
             subprocess.run(

@@ -26,27 +26,29 @@ The build system has been completely rewritten from Bash scripts to Python for b
 ### Building Binaries
 
 ```bash
-# Build for current platform
-./build.py binaries
+# Build for current platform only
+python build.py --binaries-only
 
-# Build for all platforms (where possible)
-./build.py binaries --platforms linux-x86_64,darwin-arm64,windows-x86_64
+# Build packages for specific package managers
+python build.py --packages-only --package-types pypi homebrew
 
-# Build complete release artifacts
-./build.py release
+# Build all binaries and packages
+python build.py
+
+# List available builders
+python build.py --list-builders
 ```
 
 ### Publishing
 
 ```bash
-# Publish to PyPI
-./publish.py pypi
+# Publish to PyPI (using dedicated publish script)
+python publish.py pypi
 
-# Update package manager configurations
-./publish.py package-managers
+# Publish to Test PyPI
+python publish.py pypi --test
 
-# Publish to all channels
-./publish.py all
+# Note: Package manager updates are built but not auto-published
 ```
 
 ## Architecture
@@ -55,207 +57,184 @@ The build system has been completely rewritten from Bash scripts to Python for b
 
 - **`core/`** - Core build system infrastructure
   - `config.py` - Build configuration management
-  - `platform_detector.py` - Platform and architecture detection
   - `version_manager.py` - Version handling and validation
+  - `utils.py` - Utility functions for build system
 
-- **`pyinstaller/`** - Binary compilation system
-  - `binary_builder.py` - PyInstaller wrapper for building binaries
-  - `build_all_platforms.py` - Cross-platform build orchestration
-  - `giv.spec` - PyInstaller specification file
+- **`build_binary.py`** - Simple binary compilation using PyInstaller
+  - Builds for current platform only
+  - Auto-detects platform and architecture
+  - Minimal configuration approach
 
 ### Package Managers
 
 - **`pypi/`** - Python Package Index distribution
 - **`homebrew/`** - macOS/Linux Homebrew formula
 - **`scoop/`** - Windows Scoop manifest
-- **`linux/`** - Linux package formats (deb, rpm, AppImage)
+- **`npm/`** - Node.js package wrapper
 - **`snap/`** - Ubuntu Snap packages
 - **`flatpak/`** - Linux Flatpak packages
 
+**Note:** Package manager builders are loaded dynamically and may not all be fully implemented.
+
 ### Automation
 
-- **`.github/workflows/`** - GitHub Actions workflows
-  - `build-binaries.yml` - Cross-platform binary builds
-  - `release.yml` - Complete release automation
+- **GitHub Actions** - Can be configured for automated builds
+- **Local development** - Primary focus on local building and testing
 
 ## Build Commands
 
 ### Main Build Script (`build.py`)
 
 ```bash
-# Show build system status
-./build.py status
+# List available builders
+python build.py --list-builders
 
-# Build binaries for all platforms
-./build.py binaries
+# Build binaries only (current platform)
+python build.py --binaries-only
 
-# Build specific platforms
-./build.py binaries --platforms linux-x86_64,darwin-arm64
+# Build packages only
+python build.py --packages-only
 
-# Build PyPI packages
-./build.py packages
+# Build specific package types
+python build.py --packages-only --package-types pypi homebrew scoop
 
-# Build complete release
-./build.py release
+# Build everything (binaries + packages)
+python build.py
 
-# Clean build artifacts
-./build.py clean
+# Specify version (auto-detected if not provided)
+python build.py --version 1.2.3
 ```
 
 ### Publishing Script (`publish.py`)
 
 ```bash
-# Show publishing status
-./publish.py status
-
 # Publish to PyPI
-./publish.py pypi
+python publish.py pypi
 
 # Publish to Test PyPI
-./publish.py pypi --test
+python publish.py pypi --test
 
-# Update package managers
-./publish.py package-managers
-
-# Create GitHub release
-./publish.py github
-
-# Publish to all channels
-./publish.py all
+# Note: Full publishing system is under development
 ```
 
 ### Individual Component Scripts
 
 ```bash
 # Build binary for current platform
-python pyinstaller/binary_builder.py
+python build_binary.py
 
-# Build cross-platform
-python pyinstaller/build_all_platforms.py
-
-# Build PyPI packages
+# Build PyPI packages (if pypi/ builder exists)
 python pypi/build.py
 
-# Generate Homebrew formula
+# Generate package manager configs (if builders exist)
 python homebrew/build.py
-
-# Generate Scoop manifest
 python scoop/build.py
 ```
 
 ## Platform Support
 
-### Target Platforms
+### Current Implementation
+
+The build system currently focuses on **local platform building**:
 
 | Platform | Architecture | Binary Name | Status |
 |----------|-------------|-------------|--------|
-| Linux | x86_64 | `giv-linux-x86_64` | ✅ Supported |
-| Linux | ARM64 | `giv-linux-arm64` | ✅ Supported |
-| macOS | x86_64 (Intel) | `giv-darwin-x86_64` | ✅ Supported |
-| macOS | ARM64 (Apple Silicon) | `giv-darwin-arm64` | ✅ Supported |
-| Windows | x86_64 | `giv-windows-x86_64.exe` | ✅ Supported |
+| Current Platform | Auto-detected | `giv-{system}-{arch}` | ✅ Supported |
+
+**System mapping:**
+- `darwin` → `macos` 
+- `linux` → `linux`
+- `windows` → `windows`
+
+**Architecture mapping:**
+- `x86_64`, `amd64` → `x86_64`
+- `aarch64`, `arm64` → `arm64`
 
 ### Build Methods
 
-1. **Native builds** - Build on the target platform
-2. **Cross-compilation** - Limited support for some platforms
-3. **GitHub Actions** - Automated builds on all platforms
-4. **Docker** - Containerized Linux builds
+1. **Local builds** - Build on the current platform using `build_binary.py`
+2. **Package managers** - Generate configuration files for distribution
+3. **Future**: Cross-platform builds and CI/CD automation
 
 ## Package Manager Support
 
-### Homebrew (macOS/Linux)
+### Implementation Status
 
-```bash
-# Generate formula
-python homebrew/build.py
+The build system includes package manager builders that are dynamically loaded:
 
-# Test formula
-python homebrew/build.py --test
-
-# Create tap structure
-python homebrew/build.py --create-tap
+```python
+# From build.py - builders are loaded with graceful fallback
+try:
+    from pypi import PyPIBuilder
+    self.builders['pypi'] = PyPIBuilder
+except ImportError:
+    print("⚠️  PyPIBuilder not available")
 ```
 
-### Scoop (Windows)
+### Supported Package Managers
 
-```bash
-# Generate manifest
-python scoop/build.py
+- **PyPI** - Python package distribution (primary)
+- **Homebrew** - macOS/Linux package manager
+- **Scoop** - Windows package manager  
+- **NPM** - Node.js wrapper package
+- **Snap** - Ubuntu package format
+- **Flatpak** - Universal Linux package format
 
-# Validate manifest
-python scoop/build.py --validate
-
-# Create bucket structure
-python scoop/build.py --create-bucket
-```
-
-### PyPI (Python Package)
-
-```bash
-# Build packages
-python pypi/build.py
-
-# Publish to Test PyPI
-python pypi/build.py --test-pypi
-
-# Publish to PyPI
-python pypi/build.py --pypi
-```
+**Note:** Not all builders may be fully implemented. Use `python build.py --list-builders` to see available ones.
 
 ## CI/CD Integration
 
-### GitHub Actions
+### Current Status
 
-The build system includes comprehensive GitHub Actions workflows:
+The build system is designed for local development with future CI/CD integration planned:
 
-- **Build Binaries** - Builds on every platform on tag or manual trigger
-- **Release** - Complete release process including PyPI publishing
-- **Package Configs** - Updates Homebrew/Scoop configurations
+- **Local builds** - Primary focus using `build.py` and `publish.py`
+- **GitHub Actions** - Can be configured for automated builds
+- **Package distribution** - Individual package manager builders available
 
 ### Environment Variables
 
-Required for publishing:
+For publishing (when implemented):
 
 ```bash
 # PyPI publishing
 PYPI_API_TOKEN=your-pypi-token
 TEST_PYPI_API_TOKEN=your-test-pypi-token
-
-# GitHub releases (automatically provided)
-GITHUB_TOKEN=automatic
 ```
 
 ## Development
 
-### Adding New Platforms
+### Current Implementation
 
-1. Update `core/platform_detector.py` with new platform/architecture
-2. Update `pyinstaller/giv.spec` for platform-specific requirements
-3. Add platform to GitHub Actions matrix in `build-binaries.yml`
-4. Test binary compilation and functionality
+The `UnifiedBuilder` class in `build.py` provides:
+
+1. **Dynamic builder loading** - Package managers loaded as available
+2. **Binary building** - Uses `build_binary.py` for current platform
+3. **Package building** - Coordinates multiple package manager builders
+4. **Version management** - Auto-detection via `VersionManager`
 
 ### Adding New Package Managers
 
 1. Create new directory under `build/` (e.g., `apt/`, `yum/`)
-2. Implement builder class following existing patterns
-3. Add integration to main build and publish scripts
-4. Update documentation and CI workflows
+2. Implement builder class with appropriate methods:
+   - `build_packages()` for PyPI-style builders
+   - `build_formula()` for Homebrew-style builders  
+   - `build_manifest()` for Scoop-style builders
+   - `build_package()` for generic builders
+3. Import will be attempted in `_load_builders()` method
+4. Test with `python build.py --list-builders`
 
 ### Debugging Builds
 
 ```bash
-# Verbose output
-./build.py binaries --verbose
+# Check available builders
+python build.py --list-builders
 
-# Test specific binary
-python pyinstaller/binary_builder.py --test
+# Test binary building
+python build_binary.py
 
-# Check build status
-./build.py status
-
-# Platform information
-python core/platform_detector.py
+# Test specific package type
+python build.py --packages-only --package-types pypi
 ```
 
 ## File Structure
@@ -263,36 +242,35 @@ python core/platform_detector.py
 ```
 build/
 ├── README.md                       # This file
-├── build.py                        # Main build orchestrator
-├── publish.py                      # Main publishing orchestrator
-├── build-todos.md                  # Development roadmap
+├── build.py                        # Main build orchestrator (UnifiedBuilder)
+├── publish.py                      # Main publishing orchestrator (UnifiedPublisher)
+├── build_binary.py                 # Simple PyInstaller-based binary builder
 │
 ├── core/                           # Core infrastructure
 │   ├── __init__.py
-│   ├── config.py
-│   ├── platform_detector.py
-│   └── version_manager.py
-│
-├── pyinstaller/                    # Binary compilation
-│   ├── __init__.py
-│   ├── binary_builder.py
-│   ├── build_all_platforms.py
-│   └── giv.spec
+│   ├── config.py                   # BuildConfig management
+│   ├── version_manager.py          # Version handling
+│   └── utils.py                    # Build utilities
 │
 ├── pypi/                          # PyPI packages
-│   ├── build.py
-│   └── publish.py
+│   └── build.py                   # PyPIBuilder (if implemented)
 │
 ├── homebrew/                      # Homebrew formula
-│   ├── build.py
-│   ├── giv.rb
-│   └── giv.local.rb
+│   └── build.py                   # HomebrewBuilder (if implemented)
 │
 ├── scoop/                         # Scoop manifest
-│   ├── build.py
-│   └── giv.json
+│   └── build.py                   # ScoopBuilder (if implemented)
 │
-└── [other package managers...]
+├── npm/                           # NPM wrapper package
+│   └── build.py                   # NPMBuilder (if implemented)
+│
+├── snap/                          # Snap packages
+│   └── build.py                   # SnapBuilder (if implemented)
+│
+├── flatpak/                       # Flatpak packages
+│   └── build.py                   # FlatpakBuilder (if implemented)
+│
+└── giv-{platform}-{arch}/         # Built binary output
 ```
 
 ## Migration from Bash
@@ -300,36 +278,49 @@ build/
 The original Bash-based build system has been replaced with this Python implementation. Key improvements:
 
 - **Better cross-platform support** - No shell dependencies
-- **Improved error handling** - Detailed error messages and validation
-- **Modern tooling** - Poetry, PyInstaller, GitHub Actions
-- **Maintainability** - Type hints, documentation, testing
-- **Performance** - Parallel builds, optimized binaries
+- **Improved error handling** - Detailed error messages and graceful fallbacks
+- **Modern tooling** - Poetry, PyInstaller, dynamic builder loading
+- **Maintainability** - Type hints, documentation, modular design
+- **Simplified approach** - Focus on core functionality first
 
-Legacy Bash scripts are preserved in the repository for reference but are no longer used in the build process.
+### Current State
+
+- ✅ **Basic binary building** - Current platform using PyInstaller
+- ✅ **Package manager framework** - Dynamic loading of builders
+- ✅ **Version management** - Auto-detection and handling
+- 🚧 **Multi-platform** - Individual builders need implementation
+- 🚧 **CI/CD integration** - Framework ready, workflows pending
+- 🚧 **Cross-compilation** - Future enhancement
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **PyInstaller not found**: Install with `poetry install`
-2. **Platform not supported**: Check `core/platform_detector.py` output
-3. **Binary too large**: Ensure UPX is installed and working
-4. **Cross-compilation fails**: Use GitHub Actions or Docker
-5. **Package validation fails**: Check template variables and checksums
+1. **Builder not available**: Check with `python build.py --list-builders`
+2. **Binary build fails**: Ensure PyInstaller and dependencies are installed
+3. **Platform detection**: Check `build_binary.py` output for platform naming
+4. **Package build fails**: Verify individual package builder implementation
 
 ### Getting Help
 
-- Check build system status: `./build.py status`
-- Verify platform support: `python core/platform_detector.py`
-- Test individual components: `python [component]/build.py --help`
-- Review build logs in CI/CD for automated builds
+- Check available builders: `python build.py --list-builders`
+- Test binary building: `python build_binary.py`
+- Review build logs for detailed error messages
+- Verify core dependencies are installed via Poetry
 
 ## Contributing
 
 When contributing to the build system:
 
-1. Follow existing code patterns and documentation
-2. Test on multiple platforms when possible
+1. Follow existing code patterns in `UnifiedBuilder` and `UnifiedPublisher`
+2. Add error handling with graceful fallbacks (see `_load_builders()`)
 3. Update this README for significant changes
-4. Ensure CI/CD workflows continue to pass
-5. Add appropriate error handling and validation
+4. Test with `python build.py --list-builders` and individual commands
+5. Ensure new package managers follow the builder interface patterns
+
+### Implementation Notes
+
+- Builders are loaded dynamically with ImportError handling
+- Each package manager can have different method signatures
+- The system prioritizes working functionality over feature completeness
+- Current focus is on local development workflows

@@ -228,10 +228,25 @@ class ProjectMetadata:
                     return str(poetry["name"])
                     
             except Exception:
-                # Fallback to regex parsing for malformed TOML
-                result = cls._parse_toml_like(content, key)
+                # Fallback to regex parsing for malformed TOML or missing tomllib
+                # Try PEP 621 project section first
+                result = cls._parse_toml_like(content, key, "project")
                 if result:
                     return result
+                
+                # Try Poetry section
+                result = cls._parse_toml_like(content, key, "tool.poetry")
+                if result:
+                    return result
+                
+                # Handle special key mappings for title
+                if key == "title":
+                    name_result = cls._parse_toml_like(content, "name", "project")
+                    if name_result:
+                        return name_result
+                    name_result = cls._parse_toml_like(content, "name", "tool.poetry")
+                    if name_result:
+                        return name_result
         
         # Try setup.py if pyproject.toml didn't work
         setup_content = cls.get_file_content_at_commit("setup.py", commit)
