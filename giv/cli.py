@@ -270,6 +270,11 @@ def _apply_global_args(args: argparse.Namespace, cfg_mgr: ConfigManager) -> None
     if args.output_version:
         cfg_mgr.set("output_version", args.output_version)
 
+    if not cfg_mgr.get("api_url"):
+        cfg_mgr.set("api_url", "http://localhost:11434/v1/chat/completions")
+    if not cfg_mgr.get("api_model"):
+        cfg_mgr.set("api_model", "devstral")
+
 
 
 
