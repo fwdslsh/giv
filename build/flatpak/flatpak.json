@@ -1,5 +1,5 @@
 {
-  "app-id": "com.github.giv-cli.giv",
+  "app-id": "com.github.fwdslsh.giv",
   "runtime": "org.freedesktop.Platform",
   "runtime-version": "23.08",
   "sdk": "org.freedesktop.Sdk",

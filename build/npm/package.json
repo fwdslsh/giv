@@ -4,9 +4,8 @@
   "description": "Git history AI assistant CLI tool",
   "bin": { "giv": "src/giv" },
   "files": [
-    "src/",
-    "templates/",
-    "docs/",
+    "giv",
+    "giv-windows-x86_64.exe",
     "README.md"
   ],
   "keywords": [
@@ -18,7 +17,7 @@
     "assistant",
     "release"
   ],
-  "repository": "https://github.com/giv-cli/giv",
+  "repository": "https://github.com/fwdslsh/giv",
   "private": false,
   "license": "CC-BY",
   "preferGlobal": true
