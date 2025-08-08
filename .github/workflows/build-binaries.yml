@@ -15,7 +15,29 @@ on:
         type: string
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    outputs:
+      release-id: ${{ steps.create-release.outputs.id }}
+    steps:
+    - name: Create GitHub Release
+      id: create-release
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: false
+        prerelease: ${{ contains(github.ref, '-') }}
+        name: ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+        body: |
+          Release ${{ github.ref_name }}
+          
+          Binaries are being built and will be uploaded shortly.
+        generate_release_notes: false
+
   build:
+    needs: [create-release]
+    if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
     strategy:
       matrix:
         include:
@@ -229,10 +251,11 @@ jobs:
           dist/giv-${{ matrix.target }}*
         retention-days: 30
     
-    - name: Create release (on tag)
+    - name: Upload to release (on tag)
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
       with:
         files: dist/giv-${{ matrix.target }}*
         draft: false
         prerelease: ${{ contains(github.ref, '-') }}
+        append_body: false
