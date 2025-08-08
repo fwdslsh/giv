@@ -169,6 +169,8 @@ Examples:
     update_parser = subparsers.add_parser("update", help="Self-update giv")
     update_parser.add_argument("version", nargs="?", help="Specific version to update to (default: latest)")
 
+    # clear-cache command
+    subparsers.add_parser("clear-cache", help="Clear all cached summaries and metadata")
     return parser
 
 
@@ -239,6 +241,9 @@ def run_command(args: argparse.Namespace) -> int:
             return VersionCommand(args, cfg_mgr).run()
         elif args.command == "help":
             return HelpCommand(args, cfg_mgr).run()
+        elif args.command == "clear-cache":
+            from .commands import ClearCacheCommand
+            return ClearCacheCommand(args, cfg_mgr).run()
         else:
             # Unknown command
             print(f"Error: Unknown subcommand '{args.command}'.", file=sys.stderr)

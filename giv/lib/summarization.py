@@ -7,7 +7,6 @@ the functionality described in the shell script reference implementation.
 from __future__ import annotations
 
 import logging
-import tempfile
 from pathlib import Path
 from typing import List, Optional
 
@@ -34,24 +33,9 @@ class CommitSummarizer:
         self.template_engine = TemplateEngine()
     
     def summarize_commit(self, commit: str, pathspec: Optional[List[str]] = None, 
-                        llm_client: Optional[LLMClient] = None) -> str:
+                        llm_client: Optional[LLMClient] = None, verbose: bool = False) -> str:
         """Summarize a single commit with caching.
-        
         This is the core function that matches summarize_commit from the shell script.
-        
-        Parameters
-        ----------
-        commit : str
-            Commit hash or reference
-        pathspec : Optional[List[str]]
-            Optional path specifications to limit analysis
-        llm_client : Optional[LLMClient]
-            LLM client for generating summaries
-            
-        Returns
-        -------
-        str
-            Commit summary with metadata header
         """
         logger.debug(f"Starting summarization for commit: {commit}")
         
@@ -65,7 +49,7 @@ class CommitSummarizer:
             raise ValueError("LLM client required for generating new summaries")
         
         # Build commit history 
-        history_content = self.git.build_commit_history(commit, pathspec)
+        history_content = self.git.build_commit_history(commit, pathspec, verbose=verbose)
         
         # Get commit version
         try:
@@ -89,12 +73,12 @@ class CommitSummarizer:
         full_summary = f"{metadata_header}\n{summary_content}"
         
         # Cache the result
-        self.git.cache_summary(commit, full_summary)
+        self.git.cache_summary(commit, full_summary, verbose=verbose)
         
         return full_summary
     
     def summarize_target(self, target: str, pathspec: Optional[List[str]] = None,
-                        llm_client: Optional[LLMClient] = None) -> str:
+                        llm_client: Optional[LLMClient] = None, verbose: bool = False) -> str:
         """Summarize a target revision (single commit, range, or special revision).
         
         This matches the summarize_target function from the shell script.
@@ -130,7 +114,7 @@ class CommitSummarizer:
         summaries = []
         for commit in commits:
             try:
-                summary = self.summarize_commit(commit, pathspec, llm_client)
+                summary = self.summarize_commit(commit, pathspec, llm_client, verbose=verbose)
                 summaries.append(summary)
                 summaries.append("")  # Add separator between commits
             except Exception as e:

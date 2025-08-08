@@ -13,15 +13,12 @@ implementation exactly, including:
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
-import tempfile
 import time
-import weakref
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Generator, List, Optional, Tuple, Union
+from typing import Dict, Generator, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,15 +36,13 @@ def performance_timer(operation: str, threshold_ms: float = 100) -> Generator[No
     threshold_ms : float
         Threshold in milliseconds above which to log warnings
     """
-    start_time = time.time()
-    try:
-        yield
-    finally:
-        duration_ms = (time.time() - start_time) * 1000
-        if duration_ms > threshold_ms:
-            logger.warning(f"Slow operation: {operation} took {duration_ms:.1f}ms")
-        else:
-            logger.debug(f"Performance: {operation} took {duration_ms:.1f}ms")
+    start = time.time()
+    yield
+    elapsed = (time.time() - start) * 1000
+    if elapsed > threshold_ms:
+        logger.warning(f"{operation} took {elapsed:.2f} ms")
+    else:
+        logger.debug(f"Performance: {operation} took {elapsed:.1f}ms")
 
 
 class PerformanceMetrics:
@@ -198,16 +193,16 @@ class GitRepository:
         """
         # Create cache key for this diff request
         cache_key = f"{revision or 'current'}_{str(paths)}_{include_untracked}"
-        
-        # Check cache first for non-current revisions (current can change)
-        if revision not in (None, "--current"):
+
+        # Never cache --current or --cached
+        if revision not in (None, "--current", "--cached"):
             cached_diff = self._diff_cache.get(cache_key)
             if cached_diff is not None:
                 return cached_diff
-        
+
         # Get the main diff
         diff_output = self._get_tracked_diff(revision, paths)
-        
+
         # For --current revision, always include untracked files to match Bash behavior
         if revision == "--current" or (revision is None and include_untracked):
             untracked_diff = self._get_untracked_diff(paths)
@@ -215,11 +210,15 @@ class GitRepository:
                 diff_output = f"{diff_output}\n{untracked_diff}"
             elif untracked_diff:
                 diff_output = untracked_diff
-        
-        # Cache the result for non-current revisions
-        if revision not in (None, "--current"):
+
+        # Cache the result for non-current and non-cached revisions
+        if revision not in (None, "--current", "--cached"):
             self._diff_cache.set(cache_key, diff_output)
-        
+
+        # Remove cache for --current and --cached at end of run if exists
+        if revision in ("--current", "--cached"):
+            self._diff_cache._cache.pop(cache_key, None)
+
         return diff_output
 
     def _get_tracked_diff(self, revision: Optional[str] = None, paths: Optional[List[str]] = None) -> str:
@@ -248,33 +247,29 @@ class GitRepository:
         return self._run_git_diff_command(cmd)
     
     def get_diff_streaming(self, revision: Optional[str] = None, paths: Optional[List[str]] = None, 
-                          include_untracked: bool = True, max_size_mb: int = 10):
-        """Stream large diffs to avoid memory issues.
-        
-        For diffs larger than max_size_mb, this method yields chunks instead
-        of loading the entire diff into memory.
+                          include_untracked: bool = False, chunk_size: int = 1024 * 1024, max_size_mb: int = 10):
+        """Stream diff output in chunks for large diffs.
         
         Parameters
         ----------
         revision : Optional[str]
-            Git revision specification
+            Revision to diff
         paths : Optional[List[str]]
-            Path specifications to limit diff
+            Paths to include
         include_untracked : bool
             Whether to include untracked files
+        chunk_size : int
+            Size of each chunk in bytes
         max_size_mb : int
             Maximum size in MB before streaming
-            
+        
         Yields
         ------
         str
             Diff content chunks
         """
-        import io
-        
         # Build command for tracked diff
         cmd = ["git", "--no-pager", "diff", "--unified=3", "--no-prefix", "--color=never"]
-        
         if revision == "--cached":
             cmd.append("--cached")
         elif revision == "--current" or revision is None:
@@ -300,7 +295,6 @@ class GitRepository:
             )
             
             # Read in chunks to avoid memory issues
-            chunk_size = 8192  # 8KB chunks
             total_size = 0
             max_bytes = max_size_mb * 1024 * 1024
             
@@ -830,89 +824,63 @@ class GitRepository:
                 logger.warning(f"Failed to read cache file {cache_path}: {e}")
         return None
 
-    def cache_summary(self, commit: str, summary: str) -> None:
-        """Cache a summary for a commit.
-        
-        Parameters
-        ----------
-        commit : str
-            Commit hash or reference
-        summary : str
-            Summary content to cache
-        """
+    def cache_summary(self, commit: str, summary: str, verbose: bool = False) -> None:
+        """Cache a summary for a commit, except for --current/--cached unless verbose is set."""
         cache_path = self.get_cache_path(commit, "summary")
+        if commit in ("--current", "--cached") and not verbose:
+            if cache_path.exists():
+                try:
+                    cache_path.unlink()
+                    logger.debug(f"Removed cache file for {commit} summary: {cache_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to remove cache file {cache_path}: {e}")
+            return
         try:
             cache_path.write_text(summary, encoding='utf-8')
             logger.debug(f"Cached summary for commit {commit} at {cache_path}")
         except (OSError, IOError) as e:
             logger.warning(f"Failed to cache summary for {commit}: {e}")
 
-    def build_commit_history(self, commit: str, pathspec: Optional[List[str]] = None) -> str:
-        """Build detailed history for a single commit in Markdown format.
-        
-        This matches the build_history function from the shell implementation.
-        
-        Parameters
-        ----------
-        commit : str
-            Commit hash or reference  
-        pathspec : Optional[List[str]]
-            Optional path specifications to limit analysis
-            
-        Returns
-        -------
-        str
-            Formatted commit history in Markdown
-        """
-        # Check for cached history
+    def build_commit_history(self, commit: str, pathspec: Optional[List[str]] = None, verbose: bool = False) -> str:
+        """Build detailed history for a single commit in Markdown format. Removes cache for --current/--cached unless verbose."""
         history_cache = self.get_cache_path(commit, "history")
-        if history_cache.exists():
+        if commit in ("--current", "--cached") and not verbose:
+            if history_cache.exists():
+                try:
+                    history_cache.unlink()
+                    logger.debug(f"Removed cache file for {commit} history: {history_cache}")
+                except Exception as e:
+                    logger.warning(f"Failed to remove cache file {history_cache}: {e}")
+        elif history_cache.exists():
             try:
                 return history_cache.read_text(encoding='utf-8')
             except (OSError, IOError):
-                pass  # Continue to regenerate if cache read fails
-
-        # Build history content
+                pass
         history_parts = []
-        
-        # Commit header
         history_parts.append(f"### Commit ID {commit}")
         history_parts.append(f"**Date:** {self.get_commit_date(commit)}")
-        
-        # Version if available
         from .metadata import ProjectMetadata
         try:
             version = ProjectMetadata.get_version(commit)
             if version and version != "unknown":
                 history_parts.append(f"**Version:** {version}")
         except Exception:
-            pass  # Version detection failed, continue without it
-        
-        # Commit message
+            pass
         message = self.get_commit_message(commit) or "No commit message"
         history_parts.append(f"**Message:** {message}")
-        
-        # Get diff content with memory management
         diff_content = self._get_diff_for_history(commit, pathspec)
         if diff_content.strip():
-            # Get diff stats if available
             diff_stats = self._get_diff_stats(commit, pathspec)
             if diff_stats:
                 history_parts.append(f"```diff\n{diff_content}\n{diff_stats}\n```")
             else:
                 history_parts.append(f"```diff\n{diff_content}\n```")
-        
-        # TODO: Add TODO changes extraction if needed
-        # This would require implementing extract_todo_changes equivalent
-        
         history_content = "\n".join(history_parts)
-        
-        # Cache the history
-        try:
-            history_cache.write_text(history_content, encoding='utf-8')
-        except (OSError, IOError) as e:
-            logger.warning(f"Failed to cache history for {commit}: {e}")
-        
+        if commit not in ("--current", "--cached") or verbose:
+            try:
+                history_cache.write_text(history_content, encoding='utf-8')
+            except (OSError, IOError) as e:
+                logger.warning(f"Failed to cache history for {commit}: {e}")
         return history_content
 
     def _get_diff_stats(self, commit: str, pathspec: Optional[List[str]] = None) -> str:

@@ -18,6 +18,7 @@ from .config import ConfigCommand
 from .init import InitCommand
 from .help import HelpCommand
 from .version import VersionCommand
+from .clear_cache import ClearCacheCommand
 
 __all__ = [
     'BaseCommand',
@@ -28,6 +29,7 @@ __all__ = [
     'ReleaseNotesCommand',
     'AnnouncementCommand',
     'ConfigCommand',
+    'ClearCacheCommand',
     'InitCommand',
     'HelpCommand',
     'VersionCommand',
