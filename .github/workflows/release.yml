@@ -89,7 +89,7 @@ jobs:
         retention-days: 30
     
     - name: Publish to Test PyPI
-      if: contains(github.ref, '-') || github.event_name == 'workflow_dispatch' && github.event.inputs.publish_test_pypi == 'true'
+      if: contains(github.ref, '-') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_test_pypi == 'true')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -109,11 +109,16 @@ jobs:
         echo "Configuring Test PyPI repository..."
         poetry config repositories.testpypi https://test.pypi.org/legacy/
         
-        echo "Publishing to Test PyPI..."
+        echo "Publishing packages to Test PyPI:"
+        echo "- $(basename dist/*.whl)"
+        echo "- $(basename dist/*.tar.gz)"
         poetry publish --repository testpypi --verbose
+        
+        echo "✅ Successfully published to Test PyPI!"
+        echo "Package can be installed with: pip install --index-url https://test.pypi.org/simple/ giv"
     
     - name: Publish to PyPI
-      if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') && (github.event.inputs.publish_pypi == 'true' || github.event.inputs.publish_pypi == '')
+      if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') && (github.event_name != 'workflow_dispatch' || github.event.inputs.publish_pypi == 'true' || github.event.inputs.publish_pypi == '')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
@@ -137,8 +142,13 @@ jobs:
         fi
         
         echo "✅ PyPI token is configured"
-        echo "Publishing to PyPI..."
+        echo "Publishing packages to PyPI:"
+        echo "- $(basename dist/*.whl)"
+        echo "- $(basename dist/*.tar.gz)"
         poetry publish --verbose
+        
+        echo "✅ Successfully published to PyPI!"
+        echo "Package can be installed with: pip install giv"
   
   generate-package-configs:
     runs-on: ubuntu-latest
