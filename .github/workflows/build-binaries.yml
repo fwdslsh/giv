@@ -38,16 +38,17 @@ jobs:
   build:
     needs: [create-release]
     if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
+    timeout-minutes: 45
     strategy:
       matrix:
         include:
           - platform: linux
             arch: x86_64
-            runner: ubuntu-20.04
+            runner: ubuntu-latest
             target: linux-x86_64
           - platform: linux
             arch: arm64
-            runner: ubuntu-20.04
+            runner: ubuntu-latest
             target: linux-arm64
           - platform: macos
             arch: x86_64
