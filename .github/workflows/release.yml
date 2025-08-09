@@ -54,11 +54,38 @@ jobs:
     - name: Build PyPI packages
       run: poetry build
     
+    - name: Validate built packages
+      run: |
+        echo "Validating built packages..."
+        
+        # Check that both wheel and source distribution were built
+        if [[ ! -f dist/*.whl ]]; then
+          echo "❌ ERROR: No wheel (.whl) file found"
+          exit 1
+        fi
+        
+        if [[ ! -f dist/*.tar.gz ]]; then
+          echo "❌ ERROR: No source distribution (.tar.gz) file found"
+          exit 1
+        fi
+        
+        echo "✅ Package validation successful"
+        echo "Built packages:"
+        ls -la dist/
+        
+        # Show package metadata
+        echo ""
+        echo "Package metadata:"
+        python -m pip install twine
+        python -m twine check dist/*
+    
     - name: Upload PyPI packages
       uses: actions/upload-artifact@v4
       with:
         name: pypi-packages
-        path: dist/*.whl
+        path: |
+          dist/*.whl
+          dist/*.tar.gz
         retention-days: 30
     
     - name: Publish to Test PyPI
@@ -67,12 +94,23 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
       run: |
-        if [[ -n "$TWINE_PASSWORD" ]]; then
-          poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry publish --repository testpypi
-        else
-          echo "WARNING: TEST_PYPI_API_TOKEN not found, skipping Test PyPI publish"
+        echo "Checking Test PyPI publication requirements..."
+        echo "Files to publish:"
+        ls -la dist/
+        
+        if [[ -z "$TWINE_PASSWORD" ]]; then
+          echo "❌ ERROR: TEST_PYPI_API_TOKEN secret is not set"
+          echo "Please set the TEST_PYPI_API_TOKEN secret in GitHub repository settings"
+          echo "Get your token from: https://test.pypi.org/manage/account/token/"
+          exit 0  # Don't fail the workflow, just skip
         fi
+        
+        echo "✅ Test PyPI token is configured"
+        echo "Configuring Test PyPI repository..."
+        poetry config repositories.testpypi https://test.pypi.org/legacy/
+        
+        echo "Publishing to Test PyPI..."
+        poetry publish --repository testpypi --verbose
     
     - name: Publish to PyPI
       if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') && (github.event.inputs.publish_pypi == 'true' || github.event.inputs.publish_pypi == '')
@@ -80,13 +118,27 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
-        export TWINE_USERNAME=${TWINE_USERNAME}
-        export TWINE_PASSWORD=${TWINE_PASSWORD}
-        if [[ -n "$TWINE_PASSWORD" ]]; then
-          poetry publish
-        else
-          echo "WARNING: PYPI_API_TOKEN not found, skipping PyPI publish"
+        echo "Checking PyPI publication requirements..."
+        echo "Files to publish:"
+        ls -la dist/
+        
+        if [[ -z "$TWINE_PASSWORD" ]]; then
+          echo "❌ ERROR: PYPI_API_TOKEN secret is not set"
+          echo ""
+          echo "To fix this issue:"
+          echo "1. Go to https://pypi.org/manage/account/token/"
+          echo "2. Create a new API token with 'Upload packages' scope"
+          echo "3. Add the token as 'PYPI_API_TOKEN' secret in GitHub repository settings:"
+          echo "   Settings > Secrets and variables > Actions > New repository secret"
+          echo "4. Re-run this workflow"
+          echo ""
+          echo "For more information, see: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/"
+          exit 1  # Fail the workflow to indicate the issue
         fi
+        
+        echo "✅ PyPI token is configured"
+        echo "Publishing to PyPI..."
+        poetry publish --verbose
   
   generate-package-configs:
     runs-on: ubuntu-latest
