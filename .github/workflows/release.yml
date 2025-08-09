@@ -80,6 +80,8 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
+        export TWINE_USERNAME=${TWINE_USERNAME}
+        export TWINE_PASSWORD=${TWINE_PASSWORD}
         if [[ -n "$TWINE_PASSWORD" ]]; then
           poetry publish
         else
