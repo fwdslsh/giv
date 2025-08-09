@@ -98,6 +98,53 @@ detect_platform() {
     fi
 }
 
+# Check GLIBC compatibility on Linux
+check_glibc_compatibility() {
+    if [[ "$(uname -s)" != "Linux" ]]; then
+        return 0  # Not Linux, skip check
+    fi
+    
+    # Check if ldd is available
+    if ! command -v ldd >/dev/null 2>&1; then
+        log_warning "Cannot check GLIBC version (ldd not found)"
+        return 0
+    fi
+    
+    # Get GLIBC version
+    local glibc_version
+    glibc_version=$(ldd --version 2>/dev/null | head -n1 | grep -oE '[0-9]+\.[0-9]+' | head -n1)
+    
+    if [[ -z "$glibc_version" ]]; then
+        log_warning "Cannot determine GLIBC version"
+        return 0
+    fi
+    
+    log_info "Detected GLIBC version: $glibc_version"
+    
+    # Compare with minimum required version (2.31)
+    local required_version="2.31"
+    if ! printf '%s\n%s\n' "$required_version" "$glibc_version" | sort -V -C; then
+        log_warning "GLIBC $glibc_version detected. Binary requires GLIBC $required_version or higher."
+        log_warning "Consider using 'pip install giv' instead for better compatibility."
+        
+        # Ask user if they want to continue
+        echo -n "Continue with binary installation anyway? [y/N]: "
+        read -r response
+        case "$response" in
+            [yY]|[yY][eE][sS])
+                log_info "Continuing with binary installation..."
+                return 0
+                ;;
+            *)
+                log_info "Installation cancelled. Try: pip install giv"
+                exit 1
+                ;;
+        esac
+    fi
+    
+    return 0
+}
+
 # Get latest release tag from GitHub
 get_latest_version() {
     local api_url="https://api.github.com/repos/${REPO}/releases/latest"
@@ -316,6 +363,9 @@ main() {
     local platform
     platform=$(detect_platform)
     log_info "Detected platform: $platform"
+    
+    # Check GLIBC compatibility on Linux
+    check_glibc_compatibility
     
     # Get version
     if [[ -z "$version" ]]; then

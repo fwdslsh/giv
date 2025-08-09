@@ -43,16 +43,28 @@ def build_binary():
     binary_name = get_binary_name()
     print(f"Building {binary_name}...")
     
-    # Minimal PyInstaller command - let it auto-detect what it can
+    # Determine platform-specific settings
+    is_windows = platform.system().lower() == "windows"
+    
+    # Use appropriate path separator for --add-data (Windows uses semicolon, Unix uses colon)
+    path_separator = ";" if is_windows else ":"
+    add_data_param = f"{templates_dir}{path_separator}giv/templates"
+    
+    # PyInstaller command optimized for compatibility
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--onefile",
         "--name", binary_name,
         "--distpath", str(dist_dir),
-        "--add-data", f"{templates_dir}:giv/templates",
+        "--add-data", add_data_param,
         "--collect-submodules", "giv",  # This handles most imports automatically
+        "--noupx",  # Disable UPX compression for better compatibility
         str(main_script)
     ]
+    
+    # Add --strip flag only on Unix-like systems (not supported on Windows)
+    if not is_windows:
+        cmd.insert(-1, "--strip")  # Insert before the script path
     
     try:
         subprocess.run(cmd, check=True, cwd=project_root)
