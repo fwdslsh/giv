@@ -17,19 +17,8 @@
 
 ## 🚀 Quick Install
 
-### Direct Download (Recommended)
 ```bash
-# Linux x86_64
-curl -L -o giv https://github.com/fwdslsh/giv/releases/latest/download/giv-linux-x86_64
-chmod +x giv && sudo mv giv /usr/local/bin/
-
-# macOS Apple Silicon  
-curl -L -o giv https://github.com/fwdslsh/giv/releases/latest/download/giv-macos-arm64
-chmod +x giv && sudo mv giv /usr/local/bin/
-
-# Windows x86_64
-curl -L -o giv.exe https://github.com/fwdslsh/giv/releases/latest/download/giv-windows-x86_64.exe
-# Move to a directory in your PATH
+curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
 ```
 
 **Other Installation Methods:** [Package managers, PyPI, and more →](docs/installation.md)

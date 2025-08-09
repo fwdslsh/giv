@@ -15,7 +15,27 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
 NC='\033[0m' # No Color
+
+# ASCII banner function
+show_banner() {
+    echo -e "${CYAN}${BOLD}"
+    cat << 'EOF'
+    _____ _____ _   _ 
+   |   __|     | | | |
+   |  |  |-   -| | | |
+   |_____|_____|_____| 
+                       
+   AI-Powered Git Assistant
+   
+EOF
+    echo -e "${NC}"
+    echo -e "${BLUE}Welcome to the giv installation script!${NC}"
+    echo -e "${BLUE}This will download and install giv on your system.${NC}"
+    echo
+}
 
 # Logging functions
 log_info() {
@@ -100,6 +120,8 @@ detect_platform() {
 
 # Check GLIBC compatibility on Linux
 check_glibc_compatibility() {
+    local dry_run="$1"
+    
     if [[ "$(uname -s)" != "Linux" ]]; then
         return 0  # Not Linux, skip check
     fi
@@ -127,6 +149,12 @@ check_glibc_compatibility() {
         log_warning "GLIBC $glibc_version detected. Binary requires GLIBC $required_version or higher."
         log_warning "Consider using 'pip install giv' instead for better compatibility."
         
+        # Skip interactive prompt in dry-run mode
+        if [[ "$dry_run" == "true" ]]; then
+            log_info "In dry-run mode, would ask user to continue with installation"
+            return 0
+        fi
+        
         # Ask user if they want to continue
         echo -n "Continue with binary installation anyway? [y/N]: "
         read -r response
@@ -148,15 +176,25 @@ check_glibc_compatibility() {
 # Get latest release tag from GitHub
 get_latest_version() {
     local api_url="https://api.github.com/repos/${REPO}/releases/latest"
+    local version=""
     
     if command -v curl >/dev/null 2>&1; then
-        curl -s "$api_url" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
+        version=$(curl -s --max-time 10 --fail "$api_url" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | head -n1)
     elif command -v wget >/dev/null 2>&1; then
-        wget -qO- "$api_url" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
+        version=$(wget -qO- --timeout=10 "$api_url" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | head -n1)
     else
         log_error "Neither curl nor wget is available. Please install one of them."
         exit 1
     fi
+    
+    if [[ -z "$version" ]]; then
+        log_error "Failed to get latest version from GitHub API"
+        log_error "This could be due to network issues or API rate limiting"
+        log_error "Please specify a version with --version flag or try again later"
+        exit 1
+    fi
+    
+    echo "$version"
 }
 
 # Check if binary is already installed
@@ -341,6 +379,11 @@ main() {
         force=true
     fi
     
+    # Show banner (but not for help or dry-run)
+    if [[ "$dry_run" != "true" ]]; then
+        show_banner
+    fi
+    
     # Determine installation directory
     if [[ -z "$install_dir" ]]; then
         if [[ "$user_install" == "true" ]]; then
@@ -365,7 +408,7 @@ main() {
     log_info "Detected platform: $platform"
     
     # Check GLIBC compatibility on Linux
-    check_glibc_compatibility
+    check_glibc_compatibility "$dry_run"
     
     # Get version
     if [[ -z "$version" ]]; then
