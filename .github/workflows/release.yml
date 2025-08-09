@@ -59,12 +59,14 @@ jobs:
         echo "Validating built packages..."
         
         # Check that both wheel and source distribution were built
-        if [[ ! -f dist/*.whl ]]; then
+        WHL_COUNT=$(ls dist/*.whl 2>/dev/null | wc -l)
+        if [[ $WHL_COUNT -eq 0 ]]; then
           echo "❌ ERROR: No wheel (.whl) file found"
           exit 1
         fi
         
-        if [[ ! -f dist/*.tar.gz ]]; then
+        TARGZ_COUNT=$(ls dist/*.tar.gz 2>/dev/null | wc -l)
+        if [[ $TARGZ_COUNT -eq 0 ]]; then
           echo "❌ ERROR: No source distribution (.tar.gz) file found"
           exit 1
         fi
