@@ -43,11 +43,11 @@ jobs:
         include:
           - platform: linux
             arch: x86_64
-            runner: ubuntu-latest
+            runner: ubuntu-20.04
             target: linux-x86_64
           - platform: linux
             arch: arm64
-            runner: ubuntu-latest
+            runner: ubuntu-20.04
             target: linux-arm64
           - platform: macos
             arch: x86_64

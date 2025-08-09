@@ -43,7 +43,7 @@ def build_binary():
     binary_name = get_binary_name()
     print(f"Building {binary_name}...")
     
-    # Minimal PyInstaller command - let it auto-detect what it can
+    # PyInstaller command optimized for compatibility
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--onefile",
@@ -51,6 +51,8 @@ def build_binary():
         "--distpath", str(dist_dir),
         "--add-data", f"{templates_dir}:giv/templates",
         "--collect-submodules", "giv",  # This handles most imports automatically
+        "--strip",  # Strip debug symbols to reduce size
+        "--noupx",  # Disable UPX compression for better compatibility
         str(main_script)
     ]
     

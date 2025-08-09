@@ -101,6 +101,34 @@ giv message --prompt-file custom-prompt.md
 
 **Provider Setup Examples:** [Configuration guide →](docs/configuration.md#configuration-examples)
 
+## 🔧 Troubleshooting
+
+### Linux Binary Compatibility Issues
+
+If you encounter an error like `GLIBC_2.XX not found`, this means your system has an older version of GLIBC than required:
+
+```bash
+# Check your GLIBC version
+ldd --version
+
+# If you have GLIBC < 2.31, use one of these alternatives:
+# 1. Install via pip (works on any Python 3.9+)
+pip install giv
+
+# 2. Use the install script which detects compatibility
+curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
+
+# 3. For very old systems, run from source
+git clone https://github.com/fwdslsh/giv.git && cd giv && pip install .
+```
+
+**Supported Systems:**
+- Linux: GLIBC 2.31+ (Ubuntu 20.04+, RHEL 8+, Debian 10+)
+- macOS: 10.15+ (Catalina and newer)
+- Windows: Windows 10 1909+ (November 2019 Update)
+
+For other issues, check our [troubleshooting guide](docs/troubleshooting.md).
+
 ## 🔧 Development
 
 ```bash

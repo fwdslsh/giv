@@ -9,6 +9,7 @@ on:
       - main
 
 jobs:
+  # Run tests on all commits (push and PR) for quick feedback
   test:
     runs-on: ${{ matrix.os }}
     defaults:
@@ -74,6 +75,9 @@ jobs:
         run: poetry run pytest -q
 
   build-binaries:
+    # Only build binaries for PRs and releases to be more efficient
+    # Tests run on all commits, but builds only when validating PRs
+    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/build-ci.yml
     with:
       cache_dependencies: true
