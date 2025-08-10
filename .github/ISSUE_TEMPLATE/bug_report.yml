@@ -1,0 +1,113 @@
+name: 🐛 Bug Report
+description: Report a bug or issue with giv CLI
+title: "[Bug]: "
+labels: ["type: bug", "status: triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please provide the following information to help us investigate and fix the issue.
+
+  - type: input
+    id: version
+    attributes:
+      label: giv Version
+      description: What version of giv are you running?
+      placeholder: "0.6.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system are you using?
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other (please specify in description)
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version (if using pip install)
+      description: If you installed via pip, what Python version are you using?
+      placeholder: "3.9.0"
+    validations:
+      required: false
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Command That Failed
+      description: What command were you trying to run?
+      placeholder: "giv message --output commit.txt"
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: "The command should generate a commit message and save it to commit.txt"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? Include any error messages.
+      placeholder: "Error: Template not found..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the issue
+      placeholder: |
+        1. Navigate to a git repository
+        2. Run `giv message --output commit.txt`
+        3. Error occurs
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and Additional Context
+      description: Any additional logs, screenshots, or context that might help
+      placeholder: "Add any relevant logs, configuration files, or screenshots here"
+    validations:
+      required: false
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Your giv configuration (remove any API keys!)
+      placeholder: "Output of `giv config list` (with sensitive information removed)"
+      render: yaml
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to make sure this isn't a duplicate
+          required: true
+        - label: I have removed any sensitive information (API keys, personal data) from this report
+          required: true
+        - label: I am using the latest version of giv
+          required: false

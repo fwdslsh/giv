@@ -1,0 +1,144 @@
+name: ❓ Question or Discussion
+description: Ask a question or start a discussion about giv CLI
+title: "[Question]: "
+labels: ["type: question", "status: triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about giv CLI? Want to start a discussion? This is the right place!
+        
+        **Note**: For bug reports, use the Bug Report template. For feature requests, use the Feature Request template.
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What kind of question or discussion is this?
+      options:
+        - Usage Question - How do I...?
+        - Configuration Help - How do I configure...?
+        - Integration Question - How do I integrate with...?
+        - Template Question - How do I customize...?
+        - Performance Question - Why is it slow...?
+        - Architecture Discussion - How does X work...?
+        - Best Practices - What's the recommended way...?
+        - Troubleshooting - Something isn't working right...
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know or discuss?
+      placeholder: "I'm trying to... / I want to understand... / What's the best way to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and Background
+      description: Provide context about what you're trying to achieve or the situation
+      placeholder: "I'm working on a project where... / My use case is... / I'm using giv for..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: what-tried
+    attributes:
+      label: What Have You Tried?
+      description: What have you already attempted or researched?
+      placeholder: "I've tried... / I've looked at... / I've read..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Current Configuration
+      description: Share your current giv configuration if relevant (remove API keys!)
+      placeholder: |
+        ```yaml
+        # Output of `giv config list` (with sensitive information removed)
+        api:
+          provider: openai
+          model: gpt-4
+        ```
+      render: yaml
+    validations:
+      required: false
+
+  - type: input
+    id: version-info
+    attributes:
+      label: Version Information
+      description: What version of giv are you using?
+      placeholder: "giv 0.6.0, Python 3.9.0, Linux"
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or Code
+      description: Any relevant examples, commands, or code snippets
+      placeholder: |
+        ```bash
+        # Commands you're running
+        giv message --template custom.md
+        
+        # Output or behavior you're seeing
+        ```
+      render: bash
+    validations:
+      required: false
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      description: How urgent is this question for you?
+      options:
+        - Low - Just curious, no rush
+        - Medium - Would like to know soon
+        - High - Blocking my work
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: research
+    attributes:
+      label: Research Done
+      description: What research have you already done?
+      options:
+        - label: I have searched existing issues and discussions
+        - label: I have read the relevant documentation
+        - label: I have tried the troubleshooting guide
+        - label: I have searched online for similar questions
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution Interest
+      description: After getting an answer, would you be interested in helping others?
+      options:
+        - label: I would be interested in improving documentation based on the answer
+        - label: I would like to help answer similar questions from other users
+        - label: I would be interested in contributing related features or improvements
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: This is a question or discussion, not a bug report or feature request
+          required: true
+        - label: I have provided enough context for others to understand my question
+          required: true
+        - label: I have removed any sensitive information (API keys, personal data)
+          required: true
