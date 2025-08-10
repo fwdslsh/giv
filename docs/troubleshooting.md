@@ -149,6 +149,25 @@ This guide covers common issues and their solutions when installing and using gi
    giv message -- src/
    ```
 
+## 🐳 Docker Troubleshooting
+
+### Common Issues
+
+#### Permission Denied
+If you encounter a permission denied error when running Docker commands, ensure your user is added to the `docker` group:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+#### Network Issues
+If the container cannot access the internet, check your Docker network settings or try restarting the Docker service:
+
+```bash
+sudo systemctl restart docker
+```
+
 ## Getting Help
 
 If you're still experiencing issues:

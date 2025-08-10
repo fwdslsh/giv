@@ -152,6 +152,24 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - [💬 Discussions](https://github.com/fwdslsh/giv/discussions) - Community support
 - [🗺️ Roadmap](docs/roadmap.md) - Planned features
 
+## 🐳 Docker Container
+
+Run giv using the official Docker container:
+
+```bash
+# Pull the latest Docker image
+docker pull fwdslsh/giv:latest
+
+# Run giv commands
+# Example: Generate a commit message
+docker run --rm fwdslsh/giv message
+
+# Run an interactive shell
+docker run -it fwdslsh/giv
+```
+
+**Docker Hub:** [fwdslsh/giv](https://hub.docker.com/r/fwdslsh/giv)
+
 ---
 
 *Transform your Git history into professional documentation with the power of AI.*

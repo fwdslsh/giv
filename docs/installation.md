@@ -336,3 +336,21 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 #### Linux
 - **Permission denied**: Ensure binary is executable and in a directory with execute permissions
 - **Missing dependencies**: All dependencies are statically linked, no additional packages needed
+
+## 🐳 Docker Installation
+
+You can use the official Docker container to run giv without installing it locally:
+
+```bash
+# Pull the Docker image
+docker pull fwdslsh/giv:latest
+
+# Run giv commands
+# Example: Generate a commit message
+docker run --rm fwdslsh/giv message
+
+# Run an interactive shell
+docker run -it fwdslsh/giv
+```
+
+**Docker Hub:** [fwdslsh/giv](https://hub.docker.com/r/fwdslsh/giv)
