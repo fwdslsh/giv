@@ -1,16 +1,75 @@
 name: CI
 
-on:
+"on":
   push:
     branches:
       - main
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      run_full_matrix:
+        description: 'Run tests on all platforms and Python versions'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  # Run tests on all commits (push and PR) for quick feedback
-  test:
+  # Quick test for main branch pushes - only Ubuntu + Python 3.11
+  test-quick:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && !inputs.run_full_matrix)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.4.1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          virtualenvs-path: .venv
+          installer-parallel: true
+
+      - name: Install system dependencies (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev build-essential
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        shell: bash
+        run: poetry install --no-interaction --no-ansi --no-root
+
+      - name: Install project
+        shell: bash
+        run: poetry install --no-interaction --no-ansi
+
+      - name: Run tests
+        shell: bash
+        run: poetry run pytest -q
+
+  # Full test matrix for PRs and manual runs with full matrix enabled
+  test-full:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run_full_matrix)
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -19,6 +78,140 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.4.1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          virtualenvs-path: .venv
+          installer-parallel: true
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev build-essential
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        shell: bash
+        run: poetry install --no-interaction --no-ansi --no-root
+
+      - name: Install project
+        shell: bash
+        run: poetry install --no-interaction --no-ansi
+
+      - name: Run tests
+        shell: bash
+        run: poetry run pytest -q
+
+  # Build binaries on PRs to validate they still work
+  build-binaries:
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - platform: linux
+            arch: x86_64
+            runner: ubuntu-latest
+            target: linux-x86_64
+          - platform: macos
+            arch: x86_64
+            runner: macos-13
+            target: macos-x86_64
+          - platform: windows
+            arch: x86_64
+            runner: windows-latest
+            target: windows-x86_64
+    
+    runs-on: ${{ matrix.runner }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install system dependencies (Linux)
+      if: matrix.platform == 'linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-dev build-essential
+    
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.4.1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      shell: bash
+      run: poetry install --no-interaction --no-ansi
+
+    - name: Run tests
+      shell: bash
+      run: poetry run pytest -q
+
+    - name: Build binary
+      shell: bash
+      run: poetry run build-binary
+    
+    - name: Test binary
+      shell: bash
+      run: |
+        if [[ "${{ matrix.platform }}" == "windows" ]]; then
+          BINARY_PATH="dist/giv-${{ matrix.target }}.exe"
+        else
+          BINARY_PATH="dist/giv-${{ matrix.target }}"
+          chmod +x "$BINARY_PATH"
+        fi
+        
+        # Test binary exists and is executable
+        if [[ ! -f "$BINARY_PATH" ]]; then
+          echo "ERROR: Binary not found at $BINARY_PATH"
+          ls -la dist/
+          exit 1
+        fi
+        
+        # Basic functionality test
+        "$BINARY_PATH" --version
+
+    - name: Upload test artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: giv-${{ matrix.target }}-ci
+        path: dist/giv-${{ matrix.target }}*
+        retention-days: 7
 
     steps:
       - uses: actions/checkout@v4
