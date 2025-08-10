@@ -21,7 +21,12 @@
 curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
 ```
 
-**Other Installation Methods:** [Package managers, PyPI, and more →](docs/installation.md)
+**Automated Releases:**
+All binaries and PyPI packages are built and published automatically via GitHub Actions when a new version is pushed or released.
+No manual build steps required for contributors—just bump the version, push, and create a release tag.
+Release assets (binaries and PyPI packages) are attached to each GitHub release.
+
+**Other Installation Methods:** [PyPI, install script, manual install, or build from source →](docs/installation.md)
 
 ## 🏁 Getting Started
 
@@ -122,10 +127,17 @@ For other issues, check our [troubleshooting guide](docs/troubleshooting.md).
 
 ```bash
 git clone https://github.com/fwdslsh/giv.git
-cd giv-py
+cd giv
 poetry install
 poetry run pytest
 ```
+
+## 🛠️ Build & Release Automation
+
+All builds and releases are handled by GitHub Actions:
+- **Version bump:** Edit `pyproject.toml` and push to `main`.
+- **Release:** Create a new release/tag on GitHub, and all binaries/packages are built and published automatically.
+- **No manual build scripts required.**
 
 **Development Details:** [Build system and contributing →](docs/build-system-review.md)
 

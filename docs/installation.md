@@ -11,13 +11,11 @@
 
 Choose the method that best fits your needs:
 
-| Method | Size | Dependencies | Auto-updates | Platform Support |
-|--------|------|--------------|--------------|------------------|
-| Direct Download | ~15MB | None | Manual | Linux, macOS, Windows |
-| Installation Script | ~15MB | None | Manual | Linux, macOS, Windows |
-| Homebrew | ~15MB | None | `brew upgrade` | macOS, Linux |
-| Scoop | ~15MB | None | `scoop update` | Windows |
-| PyPI | ~500KB | Python 3.8.1+ | `pip install -U` | Cross-platform |
+| Method              | Size   | Dependencies         | Auto-updates      | Platform Support         |
+|---------------------|--------|----------------------|-------------------|-------------------------|
+| Direct Download     | ~15MB  | None                 | Manual            | Linux, macOS, Windows   |
+| Installation Script | ~15MB  | None                 | Manual            | Linux, macOS, Windows   |
+| PyPI                | ~500KB | Python 3.8.1+        | `pip install -U`  | Cross-platform          |
 
 ## Quick Install (Recommended)
 
@@ -95,35 +93,11 @@ Invoke-WebRequest -Uri "https://github.com/fwdslsh/giv/releases/latest/download/
 Move-Item giv.exe C:\Windows\System32\giv.exe
 ```
 
-## Package Manager Installation
 
-### Homebrew (macOS/Linux)
-```bash
-brew install giv-cli/tap/giv
-```
-
-### Scoop (Windows)
-```bash
-scoop bucket add giv-cli https://github.com/giv-cli/scoop-bucket
-scoop install giv
-```
-
-### apt (Ubuntu/Debian)
-```bash
-curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install-apt.sh | sudo sh
-sudo apt update
-sudo apt install giv
-```
-
-### yum/dnf (RHEL/Fedora/CentOS)
-```bash
-curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install-rpm.sh | sudo sh
-sudo dnf install giv  # or yum install giv
-```
 
 ## PyPI Installation
 
-To install `giv` via PyPI, ensure you have Python 3.8.1 or later installed. Run the following command:
+To install `giv` via PyPI, ensure you have Python 3.11 or later installed. Run the following command:
 
 ```bash
 pip install giv
@@ -261,20 +235,7 @@ Re-run the installation script to get the latest version:
 curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
 ```
 
-### Using Package Managers
-```bash
-# Homebrew
-brew upgrade giv
 
-# Scoop  
-scoop update giv
-
-# apt
-sudo apt update && sudo apt upgrade giv
-
-# dnf/yum
-sudo dnf upgrade giv
-```
 
 ### Manual Upgrade
 1. Download the new binary from releases
