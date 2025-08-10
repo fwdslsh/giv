@@ -175,7 +175,7 @@ jobs:
         VERSION="${VERSION#refs/tags/v}"
         
         cat > release_notes.md << EOF
-        # giv CLI v${VERSION}
+        # giv CLI ${VERSION}
         
         ## Installation
         

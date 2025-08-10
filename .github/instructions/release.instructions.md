@@ -32,6 +32,7 @@ To create a new release for the giv CLI using GitHub Actions, follow these steps
 ## 5. Trigger the Release Workflow
 - The GitHub Actions workflow `.github/workflows/release.yml` will automatically run when a new tag matching `v*` is pushed.
 - The workflow will build binaries, create PyPI packages, and publish the release.
+- Note: You do not need to use the `gh` CLI to create the release.
 
 ## 6. Verify the Release
 - Check the Actions tab for workflow status.
