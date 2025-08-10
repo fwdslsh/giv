@@ -1,4 +1,5 @@
 name: Release
+
 permissions:
   contents: write
   packages: write
@@ -25,12 +26,13 @@ on:
         default: false
 
 jobs:
+  # Build all binaries
   build-binaries:
     uses: ./.github/workflows/build-binaries.yml
     
+  # Build PyPI packages
   build-packages:
     runs-on: ubuntu-latest
-    needs: [build-binaries]  # Wait for binaries to be built first
     
     steps:
     - name: Checkout code
@@ -96,12 +98,7 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
       run: |
-        echo "DEBUG: github.ref=${GITHUB_REF}"
-        echo "DEBUG: github.event_name=${GITHUB_EVENT_NAME}"
-        echo "DEBUG: github.event.inputs.publish_test_pypi=${{ github.event.inputs.publish_test_pypi }}"
-        echo "Checking Test PyPI publication requirements..."
-        echo "Files to publish:"
-        ls -la dist/
+        echo "Publishing to Test PyPI..."
         if [[ -z "$TWINE_PASSWORD" ]]; then
           echo "❌ ERROR: TEST_PYPI_API_TOKEN secret is not set"
           exit 0
@@ -116,150 +113,60 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
-        echo "DEBUG: github.ref=${GITHUB_REF}"
-        echo "DEBUG: github.event_name=${GITHUB_EVENT_NAME}"
-        echo "DEBUG: github.event.inputs.publish_pypi=${{ github.event.inputs.publish_pypi }}"
-        echo "Checking PyPI publication requirements..."
-        echo "Files to publish:"
-        ls -la dist/
+        echo "Publishing to PyPI..."
         if [[ -z "$TWINE_PASSWORD" ]]; then
           echo "❌ ERROR: PYPI_API_TOKEN secret is not set"
           exit 1
         fi
         poetry publish --verbose
         echo "✅ Successfully published to PyPI!"
-  
-  generate-package-configs:
+
+  # Create GitHub release and upload all assets
+  create-release:
     runs-on: ubuntu-latest
-    needs: [build-binaries]
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-binaries, build-packages]
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install Poetry
-      uses: snok/install-poetry@v1.4.1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-    
-    - name: Install dependencies
-      run: poetry install
     
     - name: Download all binary artifacts
       uses: actions/download-artifact@v4
       with:
         path: artifacts/
+        pattern: giv-*
+        merge-multiple: false
     
-    - name: Organize artifacts
+    - name: Organize release assets
       run: |
         VERSION="${{ github.ref_name }}"
-        if [[ "$VERSION" == refs/tags/v* ]]; then
-          VERSION="${VERSION#refs/tags/v}"
-        elif [[ "${{ github.event.inputs.version }}" ]]; then
-          VERSION="${{ github.event.inputs.version }}"
-        fi
+        VERSION="${VERSION#refs/tags/v}"
         
-        echo "Organizing artifacts for version: $VERSION"
+        echo "Organizing assets for version: $VERSION"
         echo "Downloaded artifacts:"
         ls -la artifacts/
         
-        # Create dist directory for binaries (what build scripts expect)
-        mkdir -p dist
+        # Create release assets directory
+        mkdir -p release-assets
         
-        # Copy binaries to dist/ directory (flat structure expected by build scripts)
+        # Copy all binaries and checksums to release assets
         for artifact_dir in artifacts/giv-*; do
           if [[ -d "$artifact_dir" ]]; then
             echo "Processing artifact directory: $artifact_dir"
             ls -la "$artifact_dir/"
             
-            # Copy all files from artifact directory to dist/
-            cp "$artifact_dir"/* dist/
-          fi
-        done
-        
-        echo "Final dist/ contents:"
-        ls -la dist/
-        
-        # Also create versioned directory structure for release assets
-        mkdir -p "dist/$VERSION"
-        
-        # Copy binaries to versioned structure as well
-        for artifact_dir in artifacts/giv-*; do
-          if [[ -d "$artifact_dir" ]]; then
-            target=$(basename "$artifact_dir" | sed 's/^giv-//')
-            
-            # Handle platform naming consistency for release organization
-            case "$target" in
-              "macos-x86_64")
-                platform="darwin"
-                arch="x86_64"
-                ;;
-              "macos-arm64")
-                platform="darwin"  
-                arch="arm64"
-                ;;
-              *)
-                platform=$(echo "$target" | cut -d'-' -f1)
-                arch=$(echo "$target" | cut -d'-' -f2)
-                ;;
-            esac
-            
-            mkdir -p "dist/$VERSION/$platform-$arch"
-            cp "$artifact_dir"/* "dist/$VERSION/$platform-$arch/"
+            # Copy all files from artifact directory to release assets
+            cp "$artifact_dir"/* release-assets/
           fi
         done
         
         # Generate consolidated checksums file
-        find dist/$VERSION -name "*.sha256" -exec cat {} \; > "dist/$VERSION/checksums.txt"
-    
-    - name: Generate Homebrew formula
-      run: |
-        poetry run python build/homebrew/build.py --create-tap
-    
-    - name: Generate Scoop manifest
-      run: |
-        poetry run python build/scoop/build.py --create-bucket --chocolatey
-    
-    - name: Upload package configs
-      uses: actions/upload-artifact@v4
-      with:
-        name: package-configs
-        path: |
-          dist/*/homebrew-tap/
-          dist/*/scoop-bucket/
-          dist/*/chocolatey/
-        retention-days: 90
-    
-    - name: Create package manager release assets
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          dist/*/homebrew-tap/Formula/giv.rb
-          dist/*/scoop-bucket/bucket/giv.json
-          dist/*/chocolatey/*.nuspec
-          dist/*/chocolatey/*.ps1
-          dist/*/checksums.txt
-        draft: false
-        prerelease: ${{ contains(github.ref, '-') }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-  create-release-notes:
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-binaries, build-packages, generate-package-configs]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+        cd release-assets
+        find . -name "*.sha256" -exec cat {} \; > checksums.txt
+        
+        echo "Final release assets:"
+        ls -la
     
     - name: Generate release notes
       id: release_notes
@@ -285,14 +192,6 @@ jobs:
         ### Package Managers
         
         \`\`\`bash
-        # Homebrew (macOS/Linux)
-        brew tap giv-cli/tap
-        brew install giv
-        
-        # Scoop (Windows)
-        scoop bucket add giv-cli https://github.com/giv-cli/scoop-bucket
-        scoop install giv
-        
         # PyPI
         pip install giv
         \`\`\`
@@ -316,11 +215,15 @@ jobs:
         cat release_notes.md >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
     
-    - name: Update release with notes
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
+        files: release-assets/*
         body: ${{ steps.release_notes.outputs.release_notes }}
         draft: false
         prerelease: ${{ contains(github.ref, '-') }}
+        name: ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+        generate_release_notes: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
