@@ -26,204 +26,25 @@ on:
         default: false
 
 jobs:
-  # Build all binaries
-  build-binaries:
-    uses: ./.github/workflows/build-binaries.yml
-    
-  # Build PyPI packages
-  build-packages:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install Poetry
-      uses: snok/install-poetry@v1.4.1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-    
-    - name: Install dependencies
-      run: poetry install
-    
-    - name: Build PyPI packages
-      run: poetry build
-    
-    - name: Validate built packages
-      run: |
-        echo "Validating built packages..."
-        
-        # Check that both wheel and source distribution were built
-        WHL_COUNT=$(ls dist/*.whl 2>/dev/null | wc -l)
-        if [[ $WHL_COUNT -eq 0 ]]; then
-          echo "❌ ERROR: No wheel (.whl) file found"
-          exit 1
-        fi
-        
-        TARGZ_COUNT=$(ls dist/*.tar.gz 2>/dev/null | wc -l)
-        if [[ $TARGZ_COUNT -eq 0 ]]; then
-          echo "❌ ERROR: No source distribution (.tar.gz) file found"
-          exit 1
-        fi
-        
-        echo "✅ Package validation successful"
-        echo "Built packages:"
-        ls -la dist/
-        
-        # Show package metadata
-        echo ""
-        echo "Package metadata:"
-        python -m pip install twine
-        python -m twine check dist/*
-    
-    - name: Upload PyPI packages
-      uses: actions/upload-artifact@v4
-      with:
-        name: pypi-packages
-        path: |
-          dist/*.whl
-          dist/*.tar.gz
-        retention-days: 30
-    
-    - name: Publish to Test PyPI
-      if: contains(github.ref, '-') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_test_pypi == 'true')
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
-      run: |
-        echo "Publishing to Test PyPI..."
-        if [[ -z "$TWINE_PASSWORD" ]]; then
-          echo "❌ ERROR: TEST_PYPI_API_TOKEN secret is not set"
-          exit 0
-        fi
-        poetry config repositories.testpypi https://test.pypi.org/legacy/
-        poetry publish --repository testpypi --verbose
-        echo "✅ Successfully published to Test PyPI!"
-    
-    - name: Publish to PyPI
-      if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') && (github.event_name != 'workflow_dispatch' || github.event.inputs.publish_pypi == 'true')
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        echo "Publishing to PyPI..."
-        if [[ -z "$TWINE_PASSWORD" ]]; then
-          echo "❌ ERROR: PYPI_API_TOKEN secret is not set"
-          exit 1
-        fi
-        poetry publish --username __token__ --password "$TWINE_PASSWORD" --skip-existing --verbose
-        echo "✅ Successfully published to PyPI!"
-
-  # Create GitHub release and upload all assets
-  create-release:
+  # Build and publish Docker image
+  publish-docker-image:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-binaries, build-packages]
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Download all binary artifacts
-      uses: actions/download-artifact@v4
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
       with:
-        path: artifacts/
-        pattern: giv-*
-        merge-multiple: false
-    
-    - name: Organize release assets
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
       run: |
         VERSION="${{ github.ref_name }}"
         VERSION="${VERSION#refs/tags/v}"
-        
-        echo "Organizing assets for version: $VERSION"
-        echo "Downloaded artifacts:"
-        ls -la artifacts/
-        
-        # Create release assets directory
-        mkdir -p release-assets
-        
-        # Copy all binaries and checksums to release assets
-        for artifact_dir in artifacts/giv-*; do
-          if [[ -d "$artifact_dir" ]]; then
-            echo "Processing artifact directory: $artifact_dir"
-            ls -la "$artifact_dir/"
-            
-            # Copy all files from artifact directory to release assets
-            cp "$artifact_dir"/* release-assets/
-          fi
-        done
-        
-        # Generate consolidated checksums file
-        cd release-assets
-        find . -name "*.sha256" -exec cat {} \; > checksums.txt
-        
-        echo "Final release assets:"
-        ls -la
-    
-    - name: Generate release notes
-      id: release_notes
-      run: |
-        VERSION="${{ github.ref_name }}"
-        VERSION="${VERSION#refs/tags/v}"
-        
-        cat > release_notes.md << EOF
-        # giv CLI ${VERSION}
-        
-        ## Installation
-        
-        ### Binary Downloads
-        
-        Download the appropriate binary for your platform:
-        
-        - **Linux x86_64**: [giv-linux-x86_64](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-linux-x86_64)
-        - **Linux ARM64**: [giv-linux-arm64](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-linux-arm64)
-        - **macOS Intel**: [giv-macos-x86_64](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-macos-x86_64)
-        - **macOS Apple Silicon**: [giv-macos-arm64](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-macos-arm64)
-        - **Windows**: [giv-windows-x86_64.exe](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/giv-windows-x86_64.exe)
-        
-        ### Package Managers
-        
-        \`\`\`bash
-        # PyPI
-        pip install giv
-        \`\`\`
-        
-        ### Installation Script
-        
-        \`\`\`bash
-        curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
-        \`\`\`
-        
-        ## What's Changed
-        
-        See the [CHANGELOG.md](https://github.com/fwdslsh/giv/blob/main/CHANGELOG.md) for detailed changes.
-        
-        ## Verification
-        
-        All binaries are signed and checksums are provided in [checksums.txt](https://github.com/fwdslsh/giv/releases/download/v${VERSION}/checksums.txt).
-        EOF
-        
-        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
-        cat release_notes.md >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-    
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: release-assets/*
-        body: ${{ steps.release_notes.outputs.release_notes }}
-        draft: false
-        prerelease: ${{ contains(github.ref, '-') }}
-        name: ${{ github.ref_name }}
-        tag_name: ${{ github.ref_name }}
-        generate_release_notes: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        docker build . -t fwdslsh/giv:latest -t fwdslsh/giv:$VERSION
+        docker push fwdslsh/giv:latest
+        docker push fwdslsh/giv:$VERSION
