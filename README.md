@@ -132,6 +132,8 @@ poetry install
 poetry run pytest
 ```
 
+**Contributing Guide:** [How to contribute to giv →](CONTRIBUTING.md)
+
 ## 🛠️ Build & Release Automation
 
 All builds and releases are handled by GitHub Actions:

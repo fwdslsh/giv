@@ -1,0 +1,146 @@
+name: 📖 Documentation Improvement
+description: Suggest improvements to documentation
+title: "[Docs]: "
+labels: ["category: documentation", "type: enhancement", "status: triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve our documentation! Clear documentation is crucial for user success.
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs improvement?
+      options:
+        - README
+        - Installation Guide
+        - Configuration Guide
+        - API Documentation
+        - Template System
+        - Integration Examples
+        - Troubleshooting
+        - Contributing Guide
+        - Development Setup
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: affected-docs
+    attributes:
+      label: Affected Documentation
+      description: Which specific documentation file(s) need improvement?
+      placeholder: "docs/configuration.md, README.md, etc."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue is this?
+      options:
+        - Missing Information
+        - Incorrect Information
+        - Unclear Explanation
+        - Outdated Content
+        - Missing Examples
+        - Poor Organization
+        - Formatting Issues
+        - Accessibility Issues
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current State
+      description: Describe what's wrong with the current documentation
+      placeholder: "The current documentation is unclear about... / The documentation is missing... / Users are confused by..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-improvement
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: "The documentation should explain... / Add an example showing... / Reorganize the section to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-impact
+    attributes:
+      label: User Impact
+      description: How does this documentation issue affect users?
+      placeholder: "Users can't figure out how to... / New users get stuck on... / This leads to confusion about..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Suggested Content or Examples
+      description: Provide draft content, examples, or references that should be included
+      placeholder: |
+        Example configuration:
+        ```yaml
+        api:
+          provider: openai
+          model: gpt-4
+        ```
+      render: markdown
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to related documentation, issues, or external resources
+      placeholder: "Similar documentation in other projects, GitHub issues, external guides, etc."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: target-audience
+    attributes:
+      label: Target Audience
+      description: Who is the primary audience for this documentation?
+      options:
+        - New Users
+        - Experienced Users
+        - Developers/Contributors
+        - System Administrators
+        - All Users
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution Interest
+      description: Would you like to help with this documentation improvement?
+      options:
+        - label: I would like to write or update this documentation
+        - label: I can provide examples or use cases
+        - label: I can help review the improved documentation
+        - label: I prefer someone else handles this
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to make sure this isn't a duplicate
+          required: true
+        - label: I have checked if this documentation issue affects user experience
+          required: true
+        - label: I have provided specific suggestions for improvement
+          required: true

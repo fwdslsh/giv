@@ -1,0 +1,169 @@
+name: 🔧 Roadmap Item Implementation
+description: Implement a specific item from the giv CLI roadmap
+title: "[Roadmap]: "
+labels: ["roadmap", "status: triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is for implementing specific items from the [giv CLI roadmap](../docs/roadmap.md). Please reference the roadmap item you want to work on.
+
+  - type: dropdown
+    id: roadmap-category
+    attributes:
+      label: Roadmap Category
+      description: Which section of the roadmap does this item belong to?
+      options:
+        - Documentation Improvements
+        - Testing and Quality Assurance
+        - Enhanced Content Generation
+        - Template System Enhancements
+        - User Interface and Experience
+        - Advanced Features
+        - Section Management Improvements
+        - New Document Types
+        - Docker and Distribution
+        - Infrastructure and Performance
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Roadmap Priority
+      description: What priority level is assigned to this roadmap item?
+      options:
+        - High
+        - Medium
+        - Low
+        - Future
+    validations:
+      required: true
+
+  - type: textarea
+    id: roadmap-item
+    attributes:
+      label: Specific Roadmap Item
+      description: Copy the specific item from the roadmap that you want to implement
+      placeholder: "Copy the exact text from the roadmap item, e.g., 'External API documentation: Comprehensive guide for using third-party APIs'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define what needs to be completed for this roadmap item
+      placeholder: |
+        - [ ] Specific deliverable 1
+        - [ ] Specific deliverable 2
+        - [ ] Documentation updated
+        - [ ] Tests added
+        - [ ] Feature working as expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation-plan
+    attributes:
+      label: Implementation Plan
+      description: How do you plan to implement this roadmap item?
+      placeholder: |
+        1. Research and design phase
+        2. Implementation of core functionality
+        3. Testing and validation
+        4. Documentation updates
+        5. Code review and refinement
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-details
+    attributes:
+      label: Technical Implementation Details
+      description: Technical approach, files to modify, new components to create
+      placeholder: |
+        Files to modify:
+        - giv/commands/...
+        - giv/templates/...
+        
+        New components:
+        - New command class
+        - Template files
+        - Configuration options
+    validations:
+      required: false
+
+  - type: dropdown
+    id: estimated-effort
+    attributes:
+      label: Estimated Effort
+      description: How much effort do you estimate this will take?
+      options:
+        - Small (1-2 days)
+        - Medium (3-7 days)
+        - Large (1-2 weeks)
+        - Epic (Multiple weeks, needs breaking down)
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Are there any dependencies or blockers for this roadmap item?
+      placeholder: "This depends on... / Blocked by... / Requires completion of..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: testing-approach
+    attributes:
+      label: Testing Approach
+      description: How will you test this implementation?
+      placeholder: |
+        - Unit tests for...
+        - Integration tests for...
+        - Manual testing scenarios...
+        - Performance testing if applicable...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: related-work
+    attributes:
+      label: Related Work
+      description: Is there related work or similar features to consider?
+      options:
+        - label: I have reviewed existing similar functionality in the codebase
+        - label: I have considered integration with existing commands
+        - label: I have checked for potential conflicts with other roadmap items
+        - label: I have reviewed the template system for integration points
+
+  - type: checkboxes
+    id: implementation-commitment
+    attributes:
+      label: Implementation Commitment
+      description: Your commitment to implementing this roadmap item
+      options:
+        - label: I am committed to implementing this roadmap item
+          required: true
+        - label: I understand this may require multiple PRs and iterations
+        - label: I will follow the contribution guidelines and coding standards
+          required: true
+        - label: I will add appropriate tests and documentation
+          required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have read the roadmap and understand the scope of this item
+          required: true
+        - label: I have checked that no one else is already working on this item
+          required: true
+        - label: I have considered the technical complexity and my ability to complete it
+          required: true

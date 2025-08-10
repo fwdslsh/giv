@@ -1,0 +1,139 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for giv CLI
+title: "[Feature]: "
+labels: ["type: feature", "status: triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Please provide the following information to help us understand and evaluate your request.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: What type of feature is this?
+      options:
+        - Documentation
+        - Testing & Quality Assurance
+        - Content Generation
+        - Template System
+        - User Interface & Experience
+        - Advanced Features
+        - Performance & Optimization
+        - Distribution & Packaging
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature to you?
+      options:
+        - High - I need this soon
+        - Medium - This would be very helpful
+        - Low - Nice to have
+        - Future - Long-term idea
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Description
+      description: What problem does this feature solve? What use case does it address?
+      placeholder: "I'm always frustrated when... / I need to be able to... / Currently it's difficult to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How should this feature work? Describe your ideal solution.
+      placeholder: "I would like giv to... / The feature should work by... / Users should be able to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other approaches or workarounds have you considered?
+      placeholder: "I've tried... / Another approach could be... / Currently I work around this by..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Usage Examples
+      description: Provide examples of how this feature would be used
+      placeholder: |
+        # Example command
+        giv new-feature --option value
+
+        # Example output
+        Generated content would look like...
+      render: bash
+    validations:
+      required: false
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or References
+      description: Any mockups, screenshots, or references to similar features in other tools
+      placeholder: "Link to similar features in other tools, mockups, or visual examples"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated Complexity
+      description: How complex do you think this feature would be to implement?
+      options:
+        - Simple - Small change or addition
+        - Medium - Moderate development effort
+        - Complex - Significant development effort
+        - I'm not sure
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: roadmap
+    attributes:
+      label: Roadmap Alignment
+      description: Does this feature align with existing roadmap items?
+      options:
+        - label: I have checked the [roadmap](../docs/roadmap.md) and this feature aligns with planned items
+        - label: This is a new feature not currently on the roadmap
+        - label: I'm not sure about roadmap alignment
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: Implementation Interest
+      description: Would you be interested in helping implement this feature?
+      options:
+        - label: I would be interested in working on this feature
+        - label: I would like to help with testing this feature
+        - label: I would help with documentation for this feature
+        - label: I would prefer someone else implements this
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to make sure this isn't a duplicate
+          required: true
+        - label: I have checked the roadmap to see if this feature is already planned
+          required: true
+        - label: I have provided clear use cases and examples
+          required: true

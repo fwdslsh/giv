@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/fwdslsh/giv/discussions
+    about: Ask questions, share ideas, and discuss giv with the community
+  - name: 📖 Documentation
+    url: https://github.com/fwdslsh/giv/tree/main/docs
+    about: Check our comprehensive documentation before creating an issue
+  - name: 🗺️ Roadmap
+    url: https://github.com/fwdslsh/giv/blob/main/docs/roadmap.md
+    about: See planned features and project direction
