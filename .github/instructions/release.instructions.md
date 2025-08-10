@@ -11,9 +11,9 @@ To create a new release for the giv CLI using GitHub Actions, follow these steps
 - Update the `version` field under `[tool.poetry]` to the new release version (e.g., `0.5.7`).
 
 ## 2. Commit the Change
-- Stage and commit the version bump:
+- Stage and commit all pending changes:
   ```bash
-  git add pyproject.toml
+  git add .
   git commit -m "chore: bump version to <new-version>"
   ```
 
