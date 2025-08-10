@@ -77,8 +77,8 @@ def build_binary():
 
 def main():
     """Entry point for Poetry script."""
-    success = build_binary()
-    sys.exit(0 if success else 1)
+    if not build_binary():
+        sys.exit(1)
 
 
 if __name__ == "__main__":
