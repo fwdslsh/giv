@@ -96,61 +96,38 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
       run: |
+        echo "DEBUG: github.ref=${GITHUB_REF}"
+        echo "DEBUG: github.event_name=${GITHUB_EVENT_NAME}"
+        echo "DEBUG: github.event.inputs.publish_test_pypi=${{ github.event.inputs.publish_test_pypi }}"
         echo "Checking Test PyPI publication requirements..."
         echo "Files to publish:"
         ls -la dist/
-        
         if [[ -z "$TWINE_PASSWORD" ]]; then
           echo "❌ ERROR: TEST_PYPI_API_TOKEN secret is not set"
-          echo "Please set the TEST_PYPI_API_TOKEN secret in GitHub repository settings"
-          echo "Get your token from: https://test.pypi.org/manage/account/token/"
-          exit 0  # Don't fail the workflow, just skip
+          exit 0
         fi
-        
-        echo "✅ Test PyPI token is configured"
-        echo "Configuring Test PyPI repository..."
         poetry config repositories.testpypi https://test.pypi.org/legacy/
-        
-        echo "Publishing packages to Test PyPI:"
-        echo "- $(basename dist/*.whl)"
-        echo "- $(basename dist/*.tar.gz)"
         poetry publish --repository testpypi --verbose
-        
         echo "✅ Successfully published to Test PyPI!"
-        echo "Package can be installed with: pip install --index-url https://test.pypi.org/simple/ giv"
     
     - name: Publish to PyPI
-      if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') && (github.event_name != 'workflow_dispatch' || github.event.inputs.publish_pypi == 'true' || github.event.inputs.publish_pypi == '')
+      if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') && (github.event_name != 'workflow_dispatch' || github.event.inputs.publish_pypi == 'true')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
+        echo "DEBUG: github.ref=${GITHUB_REF}"
+        echo "DEBUG: github.event_name=${GITHUB_EVENT_NAME}"
+        echo "DEBUG: github.event.inputs.publish_pypi=${{ github.event.inputs.publish_pypi }}"
         echo "Checking PyPI publication requirements..."
         echo "Files to publish:"
         ls -la dist/
-        
         if [[ -z "$TWINE_PASSWORD" ]]; then
           echo "❌ ERROR: PYPI_API_TOKEN secret is not set"
-          echo ""
-          echo "To fix this issue:"
-          echo "1. Go to https://pypi.org/manage/account/token/"
-          echo "2. Create a new API token with 'Upload packages' scope"
-          echo "3. Add the token as 'PYPI_API_TOKEN' secret in GitHub repository settings:"
-          echo "   Settings > Secrets and variables > Actions > New repository secret"
-          echo "4. Re-run this workflow"
-          echo ""
-          echo "For more information, see: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/"
-          exit 1  # Fail the workflow to indicate the issue
+          exit 1
         fi
-        
-        echo "✅ PyPI token is configured"
-        echo "Publishing packages to PyPI:"
-        echo "- $(basename dist/*.whl)"
-        echo "- $(basename dist/*.tar.gz)"
         poetry publish --verbose
-        
         echo "✅ Successfully published to PyPI!"
-        echo "Package can be installed with: pip install giv"
   
   generate-package-configs:
     runs-on: ubuntu-latest
