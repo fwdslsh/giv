@@ -118,7 +118,7 @@ jobs:
           echo "❌ ERROR: PYPI_API_TOKEN secret is not set"
           exit 1
         fi
-        poetry publish --verbose
+        poetry publish --username __token__ --password "$TWINE_PASSWORD" --build --verbose
         echo "✅ Successfully published to PyPI!"
 
   # Create GitHub release and upload all assets
