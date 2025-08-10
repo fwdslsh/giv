@@ -18,4 +18,4 @@ try:
     __version__ = metadata.version("giv")
 except metadata.PackageNotFoundError:
     # Fallback during development
-    __version__ = "0.1.0"
+    __version__ = "0.2.0"
