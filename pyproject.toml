@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "giv"
-version = "0.5.11"
+version = "0.5.12"
 description = "Intelligent Git commit message and changelog generator powered by AI"
 authors = ["fwdslsh <fwdslshdev@gmail.com>"]
 readme = "README.md"
