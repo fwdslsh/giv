@@ -11,7 +11,7 @@ Transform Git history data into professional documentation using AI assistance. 
 ### Key Features
 
 - **Self-contained binaries** - No Python installation required
-- **Multiple AI backends** - OpenAI, Anthropic, Ollama, and custom endpoints  
+- **Multiple AI backends** - OpenAI, Anthropic, Ollama, and custom endpoints
 - **Rich command suite** - Generate messages, summaries, changelogs, and release notes
 - **Smart Git integration** - Support for revision ranges, pathspecs, and staged changes
 - **Flexible configuration** - Project and user-level settings with inheritance
@@ -42,17 +42,14 @@ Transform Git history data into professional documentation using AI assistance. 
 
 - **Revision Range Analysis** - Process specific commit ranges (e.g., `v1.0.0..HEAD`)
 - **Pathspec Filtering** - Limit analysis to specific files or directories
-- **Working Tree Analysis** - Analyze unstaged changes (`--current`)
+- **Working Tree Analysis** - Analyze unstaged and staged changes in the current working tree (`--current`)
 - **Staged Changes Analysis** - Analyze staged changes (`--cached`)
 - **Diff Processing** - Extract meaningful context from Git diffs
 - **Commit History Processing** - Parse and summarize commit metadata
 
 ### AI Backend Support
 
-- **OpenAI** - GPT-4, GPT-3.5-turbo models
-- **Anthropic** - Claude 3.5 Sonnet, Claude 3 Opus models  
-- **Ollama** - Local models including Llama 3.2, Code Llama, devstral
-- **Custom endpoints** - Any OpenAI-compatible API
+- **OpenAI-compatible APIs** - Supports various providers including OpenAI, Anthropic, Ollama, and custom endpoints.
 
 ## Command Line Interface
 
@@ -88,7 +85,7 @@ giv [global-options] <command> [command-options] [arguments]
 - `--todo-files TODO_FILES` - Pathspec for files to scan for TODOs
 - `--todo-pattern TODO_PATTERN` - Regex to match TODO lines
 - `--version-file VERSION_FILE` - Pathspec of file(s) to inspect for version bumps
-- `--version-pattern VERSION_PATTERN` - Custom regex to identify version strings
+- `--version-pattern VERSION_PATTERN` - Regex to identify version strings
 
 #### Output Options
 
@@ -97,10 +94,6 @@ giv [global-options] <command> [command-options] [arguments]
 - `--output-file OUTPUT_FILE` - Write output to specified file instead of stdout
 - `--prompt-file PROMPT_FILE` - Path to custom prompt template file
 
-#### Utility Options
-
-- `--list` - List available local models
-
 ## Commands
 
 ### 1. `config` - Configuration Management
@@ -108,10 +101,11 @@ giv [global-options] <command> [command-options] [arguments]
 Manage persistent configuration values with support for list, get, set, and unset operations.
 
 **Syntax:**
+
 ```bash
 giv config [--list|--get|--set|--unset] [key] [value]
 giv config list                    # List all configuration values
-giv config get <key>               # Get a configuration value  
+giv config get <key>               # Get a configuration value
 giv config set <key> <value>       # Set a configuration value
 giv config unset <key>             # Remove a configuration value
 
@@ -122,16 +116,19 @@ giv config <key> <value>           # Sets key to value
 ```
 
 **Options:**
+
 - `--list` - List all configuration values
 - `--get` - Get a configuration value
-- `--set` - Set a configuration value  
+- `--set` - Set a configuration value
 - `--unset` - Remove a configuration value
 
 **Arguments:**
+
 - `key` - Configuration key (optional, required for get/set/unset)
 - `value` - Configuration value (optional, required for set)
 
 **Examples:**
+
 ```bash
 giv config list
 giv config set api.key "your-api-key"
@@ -145,19 +142,23 @@ giv config unset api.key
 Generate AI-assisted commit messages from Git diffs.
 
 **Syntax:**
+
 ```bash
 giv message [options] [revision] [pathspec...]
 ```
 
 **Options:**
-- `--current` - Analyze working tree changes (default)
+
+- `--current` - Analyze all working tree changes (default)
 - `--cached` - Analyze staged changes only
 
 **Arguments:**
+
 - `revision` - Revision range to analyze (default: `--current`)
 - `pathspec` - Limit analysis to specified paths (optional)
 
 **Examples:**
+
 ```bash
 giv message                        # Current working tree changes
 giv message --cached               # Staged changes only
@@ -171,19 +172,23 @@ giv message --output-file commit.txt
 Generate comprehensive summaries of recent changes.
 
 **Syntax:**
+
 ```bash
 giv summary [options] [revision] [pathspec...]
 ```
 
 **Options:**
+
 - `--current` - Analyze working tree changes (default)
 - `--cached` - Analyze staged changes only
 
 **Arguments:**
+
 - `revision` - Revision range to summarize (default: `--current`)
 - `pathspec` - Limit summary to specified paths (optional)
 
 **Examples:**
+
 ```bash
 giv summary                        # Current changes
 giv summary HEAD~5..HEAD           # Last 5 commits
@@ -196,15 +201,18 @@ giv summary --output-file SUMMARY.md
 Generate or update changelogs in Keep a Changelog format.
 
 **Syntax:**
+
 ```bash
 giv changelog [options] [revision] [pathspec...]
 ```
 
 **Arguments:**
+
 - `revision` - Revision range for changelog (default: `--current`)
 - `pathspec` - Limit changelog to specified paths (optional)
 
 **Examples:**
+
 ```bash
 giv changelog v1.0.0..HEAD         # Since last release
 giv changelog --output-file CHANGELOG.md
@@ -216,15 +224,18 @@ giv changelog --output-mode append v2.0.0..HEAD
 Generate detailed release notes for tagged releases.
 
 **Syntax:**
+
 ```bash
 giv release-notes [options] [revision] [pathspec...]
 ```
 
 **Arguments:**
+
 - `revision` - Revision range for release notes (default: `--current`)
 - `pathspec` - Limit release notes to specified paths (optional)
 
 **Examples:**
+
 ```bash
 giv release-notes v1.2.0..HEAD     # Since v1.2.0
 giv release-notes --output-file RELEASE_NOTES.md
@@ -236,15 +247,18 @@ giv release-notes --output-version "2.0.0"
 Create marketing-style announcements for releases.
 
 **Syntax:**
+
 ```bash
 giv announcement [options] [revision] [pathspec...]
 ```
 
 **Arguments:**
+
 - `revision` - Revision range for announcement (default: `--current`)
 - `pathspec` - Limit announcement to specified paths (optional)
 
 **Examples:**
+
 ```bash
 giv announcement v1.0.0..HEAD      # Since v1.0.0
 giv announcement --output-file ANNOUNCEMENT.md
@@ -255,18 +269,22 @@ giv announcement --output-file ANNOUNCEMENT.md
 Generate custom content using user-defined prompt templates.
 
 **Syntax:**
+
 ```bash
 giv document [options] [revision] [pathspec...]
 ```
 
 **Required Options:**
+
 - `--prompt-file PROMPT_FILE` - Path to custom prompt template (required)
 
 **Arguments:**
+
 - `revision` - Revision range to document (default: `--current`)
 - `pathspec` - Limit documentation to specified paths (optional)
 
 **Examples:**
+
 ```bash
 giv document --prompt-file templates/security-review.md HEAD~10..HEAD
 giv document --prompt-file custom.md --output-file REPORT.md
@@ -277,17 +295,20 @@ giv document --prompt-file custom.md --output-file REPORT.md
 Initialize giv configuration interactively.
 
 **Syntax:**
+
 ```bash
 giv init
 ```
 
 **Behavior:**
+
 - Creates `.giv/` directory structure
 - Prompts for basic configuration (API keys, models, etc.)
 - Sets up default templates
 - Configures project-specific settings
 
 **Examples:**
+
 ```bash
 giv init                           # Interactive setup
 ```
@@ -297,11 +318,13 @@ giv init                           # Interactive setup
 Display version information and exit.
 
 **Syntax:**
+
 ```bash
 giv version
 ```
 
 **Examples:**
+
 ```bash
 giv version                        # Show version number
 ```
@@ -311,14 +334,17 @@ giv version                        # Show version number
 Show help information for commands.
 
 **Syntax:**
+
 ```bash
 giv help [command_name]
 ```
 
 **Arguments:**
+
 - `command_name` - Command to show help for (optional)
 
 **Examples:**
+
 ```bash
 giv help                          # General help
 giv help message                  # Help for message command
@@ -329,11 +355,13 @@ giv help message                  # Help for message command
 List all available giv versions from GitHub releases.
 
 **Syntax:**
+
 ```bash
 giv available-releases
 ```
 
 **Examples:**
+
 ```bash
 giv available-releases            # List all versions
 ```
@@ -343,19 +371,23 @@ giv available-releases            # List all versions
 Update giv to the latest or specified version.
 
 **Syntax:**
+
 ```bash
 giv update [version]
 ```
 
 **Arguments:**
+
 - `version` - Specific version to update to (optional, default: latest)
 
 **Behavior:**
+
 - For security reasons, provides manual update instructions
 - Does not automatically execute scripts
 - Shows available update methods (package managers, direct download, etc.)
 
 **Examples:**
+
 ```bash
 giv update                        # Update to latest
 giv update v0.6.0                 # Update to specific version
@@ -366,11 +398,13 @@ giv update v0.6.0                 # Update to specific version
 Clear all cached summaries and metadata.
 
 **Syntax:**
+
 ```bash
 giv clear-cache
 ```
 
 **Examples:**
+
 ```bash
 giv clear-cache                   # Clear all caches
 ```
@@ -397,7 +431,7 @@ api.url=https://api.openai.com/v1/chat/completions
 api.key="your-api-key-here"
 api.model=gpt-4
 
-# Project Configuration  
+# Project Configuration
 project.title="My Project"
 project.description="A sample project"
 project.url="https://github.com/user/project"
@@ -421,6 +455,7 @@ export GIV_TODO_PATTERN="TODO:|FIXME:"
 ### Configuration Keys
 
 #### API Configuration
+
 - `api.url` - API endpoint URL (default: `http://localhost:11434/v1/chat/completions`)
 - `api.key` - API authentication key
 - `api.model` - Model name (default: `devstral`)
@@ -429,18 +464,21 @@ export GIV_TODO_PATTERN="TODO:|FIXME:"
 - `api.model.timeout` - Request timeout in seconds (default: 30)
 
 #### Project Configuration
+
 - `project.title` - Project title for documentation
 - `project.description` - Project description
 - `project.url` - Project URL
 - `project.type` - Project type hint
 
 #### Content Configuration
+
 - `todo.file` - Files to scan for TODOs (pathspec)
 - `todo.pattern` - Regex pattern for TODO detection
 - `version.file` - Files to scan for version information (pathspec)
 - `version.pattern` - Regex pattern for version detection
 
 #### Output Configuration
+
 - `output.mode` - Default output mode (`auto`, `append`, `prepend`, `update`, `overwrite`)
 - `changelog.file` - Default changelog filename (default: `CHANGELOG.md`)
 - `release_notes_file` - Default release notes filename (default: `RELEASE_NOTES.md`)
@@ -455,7 +493,7 @@ Templates are discovered using the following search hierarchy:
 1. **Explicit path** - When `--prompt-file` specifies absolute/relative path
 2. **Custom template directory** - If provided to TemplateEngine
 3. **Project-level templates** - `.giv/templates/` directory
-4. **User-level templates** - `~/.giv/templates/` directory  
+4. **User-level templates** - `~/.giv/templates/` directory
 5. **System templates** - Built-in templates shipped with giv
 
 ### Built-in Templates
@@ -471,6 +509,7 @@ Templates are discovered using the following search hierarchy:
 Templates support variable substitution using `{VARIABLE}` syntax:
 
 #### Core Variables
+
 - `{SUMMARY}` - Processed Git diff and commit information
 - `{PROJECT_TITLE}` - Project title from configuration
 - `{VERSION}` - Version string (for release content)
@@ -479,7 +518,8 @@ Templates support variable substitution using `{VARIABLE}` syntax:
 - `{COMMIT_ID}` - Git commit SHA
 - `{DIFF}` - Raw Git diff output
 
-#### Content Variables  
+#### Content Variables
+
 - `{TODOS}` - Extracted TODO items from code
 - `{VERSION_CHANGES}` - Detected version bump information
 - `{EXAMPLE}` - Example content (template-specific)
@@ -497,6 +537,7 @@ Users can customize templates by:
 ### Template Format
 
 Templates are Markdown files with:
+
 - **Variable placeholders** using `{VARIABLE}` syntax
 - **Instruction sections** for AI guidance
 - **Example sections** showing desired output format
@@ -509,39 +550,44 @@ Templates are Markdown files with:
 giv supports multiple output modes to handle different workflow requirements:
 
 #### `auto` (Default)
+
 - **New files**: Create new file
 - **Existing files**: Intelligently merge content based on file type
 - **Changelogs**: Prepend new entries
 - **Other files**: Append content
 
 #### `prepend`
+
 - Add new content to the beginning of existing files
 - Create new file if it doesn't exist
 - Useful for changelogs and release notes
 
-#### `append`  
+#### `append`
+
 - Add new content to the end of existing files
 - Create new file if it doesn't exist
 - Useful for continuous documentation
 
 #### `update`
+
 - Replace specific sections in existing files
 - Create new file if it doesn't exist
 - Useful for maintaining living documents
 
 #### `overwrite`
+
 - Replace entire file content
 - Create new file if it doesn't exist
 - Useful for generated reports
 
 #### `none`
+
 - Output to stdout only
 - Never write to files
 - Useful for previewing or piping to other commands
 
 ### File Handling
 
-- **Backup creation** - Original files backed up before modification (when appropriate)
 - **Atomic writes** - Files written atomically to prevent corruption
 - **Permission preservation** - File permissions maintained during updates
 - **Directory creation** - Output directories created automatically
@@ -549,6 +595,7 @@ giv supports multiple output modes to handle different workflow requirements:
 ### Dry Run Mode
 
 When `--dry-run` is specified:
+
 - No files are written or modified
 - All output is sent to stdout with clear labels
 - Template rendering and AI generation still occur
@@ -561,15 +608,18 @@ When `--dry-run` is specified:
 giv supports multiple AI backends through a unified interface:
 
 #### OpenAI Models
+
 - `gpt-4` - Highest quality, most expensive
 - `gpt-4-turbo` - Fast, high quality
 - `gpt-3.5-turbo` - Good quality, cost-effective
 
-#### Anthropic Models  
+#### Anthropic Models
+
 - `claude-3-5-sonnet` - High quality, good for documentation
 - `claude-3-opus` - Highest quality Anthropic model
 
 #### Local Models (via Ollama)
+
 - `devstral` - Code-focused model (default for local)
 - `llama3.2` - General purpose model
 - `codellama` - Code-specialized model
@@ -577,27 +627,31 @@ giv supports multiple AI backends through a unified interface:
 ### API Configuration
 
 #### OpenAI Configuration
+
 ```bash
+export OPENAI_API_KEY="your-openai-api-key"
 giv config set api.url "https://api.openai.com/v1/chat/completions"
-giv config set api.key "your-openai-api-key"
-giv config set api.model "gpt-4"
+giv config set api.model "gpt-4.1-mini"
 ```
 
 #### Anthropic Configuration
+
 ```bash
+export OPENAI_API_KEY="your-anthropic-api-key"
 giv config set api.url "https://api.anthropic.com/v1/messages"
-giv config set api.key "your-anthropic-api-key"  
 giv config set api.model "claude-3-5-sonnet"
 ```
 
 #### Ollama Configuration (Local)
+
 ```bash
-giv config set api.url "http://localhost:11434/v1/chat/completions"
+giv config set api.url P"http://localhost:11434/v1/chat/completions"
 giv config set api.model "devstral"
 # No API key required for local models
 ```
 
 #### Custom Endpoint Configuration
+
 ```bash
 giv config set api.url "https://your-custom-endpoint.com/v1/chat/completions"
 giv config set api.key "your-custom-api-key"
@@ -619,6 +673,7 @@ giv config set api.model "your-custom-model"
 giv supports Git's full revision specification syntax:
 
 #### Revision Ranges
+
 - `HEAD~5..HEAD` - Last 5 commits
 - `v1.0.0..HEAD` - All commits since v1.0.0 tag
 - `main..feature-branch` - Commits in feature-branch not in main
@@ -626,6 +681,7 @@ giv supports Git's full revision specification syntax:
 - `--cached` - Staged changes (index)
 
 #### Single Revisions
+
 - `HEAD` - Latest commit
 - `HEAD~3` - 3 commits before HEAD
 - `v1.2.0` - Specific tag
@@ -661,6 +717,7 @@ giv summary HEAD~5..HEAD docs/ tests/   # Multiple paths
 ### Error Messages
 
 Error messages provide:
+
 - **Clear description** of what went wrong
 - **Context information** about where the error occurred
 - **Suggested solutions** when possible
@@ -671,18 +728,22 @@ Error messages provide:
 Common error scenarios and solutions:
 
 #### Template Errors
+
 - **Missing template**: Check template search paths, verify template exists
 - **Invalid template**: Validate template syntax, check variable names
 
 #### Git Errors
+
 - **Not in repository**: Run giv from within a Git repository
 - **Invalid revision**: Verify revision syntax, check that commits exist
 
 #### Configuration Errors
+
 - **Missing API key**: Set API key via config or environment variable
 - **Invalid API endpoint**: Verify URL format and endpoint accessibility
 
 #### API Errors
+
 - **Authentication failure**: Verify API key is correct and has permissions
 - **Rate limiting**: Implement retry logic or reduce request frequency
 - **Network issues**: Check internet connectivity and endpoint availability
@@ -690,16 +751,19 @@ Common error scenarios and solutions:
 ## Security Considerations
 
 ### Template Security
+
 - **Path traversal prevention** - Template paths validated to prevent directory traversal
 - **Safe directories only** - Template loading restricted to safe directories
 - **Input validation** - Template names validated for security
 
 ### API Security
+
 - **Secure credential storage** - API keys stored in protected configuration files
 - **HTTPS enforcement** - All API communications use HTTPS when possible
 - **Input sanitization** - User input sanitized before sending to AI models
 
 ### File System Security
+
 - **Safe file operations** - Atomic writes prevent corruption
 - **Permission preservation** - File permissions maintained during operations
 - **Backup creation** - Original files backed up before modification
@@ -709,6 +773,7 @@ Common error scenarios and solutions:
 ### Installation Methods
 
 #### Binary Installation (Recommended)
+
 ```bash
 # Install script (detects platform automatically)
 curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
@@ -718,6 +783,7 @@ curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
 ```
 
 #### Package Manager Installation
+
 ```bash
 # PyPI
 pip install giv
@@ -725,11 +791,12 @@ pip install giv
 # Homebrew (macOS/Linux)
 brew install giv
 
-# Scoop (Windows)  
+# Scoop (Windows)
 scoop install giv
 ```
 
 #### From Source
+
 ```bash
 git clone https://github.com/fwdslsh/giv.git
 cd giv
@@ -739,11 +806,13 @@ pip install .
 ### System Requirements
 
 #### Supported Platforms
+
 - **Linux**: GLIBC 2.31+ (Ubuntu 20.04+, RHEL 8+, Debian 10+)
 - **macOS**: 10.15+ (Catalina and newer)
 - **Windows**: Windows 10 1909+ (November 2019 Update)
 
 #### Dependencies
+
 - **Binary distribution**: No dependencies required
 - **PyPI installation**: Python 3.9+ required
 - **Source installation**: Python 3.9+, pip, build tools
@@ -775,6 +844,7 @@ docker run --rm -v $(pwd):/workspace -w /workspace fwdslsh/giv message
 ### CI/CD Pipeline Integration
 
 #### GitHub Actions
+
 ```yaml
 name: Generate Changelog
 on:
@@ -794,6 +864,7 @@ jobs:
 ```
 
 #### GitLab CI
+
 ```yaml
 generate-docs:
   image: fwdslsh/giv:latest
@@ -872,7 +943,7 @@ giv config set api.key "sk-your-openai-key"
 giv config set api.model "gpt-4"
 
 # Set up Anthropic
-giv config set api.url "https://api.anthropic.com/v1/messages"  
+giv config set api.url "https://api.anthropic.com/v1/messages"
 giv config set api.key "your-anthropic-key"
 giv config set api.model "claude-3-5-sonnet"
 
