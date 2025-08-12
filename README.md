@@ -17,16 +17,20 @@
 
 ## 🚀 Quick Install
 
+### One-Line Installation ✨
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
 ```
+
+> **⚠️ Important:** Make sure you use `giv` in the URL, not `catalog` or other repositories.
+
+**Alternative Methods:** PyPI (`pip install giv`), manual download, or [see all options →](docs/installation.md)
 
 **Automated Releases:**
 All binaries and PyPI packages are built and published automatically via GitHub Actions when a new version is pushed or released.
 No manual build steps required for contributors—just bump the version, push, and create a release tag.
 Release assets (binaries and PyPI packages) are attached to each GitHub release.
-
-**Other Installation Methods:** [PyPI, install script, manual install, or build from source →](docs/installation.md)
 
 ## 🏁 Getting Started
 
