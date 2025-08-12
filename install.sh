@@ -59,6 +59,9 @@ show_help() {
     cat << EOF
 giv CLI Installation Script
 
+CORRECT INSTALLATION COMMAND:
+    curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
+
 USAGE:
     $0 [OPTIONS]
 
@@ -81,6 +84,14 @@ ENVIRONMENT VARIABLES:
     GIV_INSTALL_DIR            Override default installation directory
     GIV_VERSION                Override version to install
     GIV_FORCE                  Force reinstall (set to any value)
+
+COMMON MISTAKES:
+    ❌ Using wrong repository URL (e.g., 'catalog' instead of 'giv')
+    ❌ Missing 'main' branch in URL
+    ❌ Using outdated installation instructions
+
+For documentation and troubleshooting:
+    https://github.com/fwdslsh/giv/blob/main/docs/installation.md
 
 EOF
 }
@@ -173,6 +184,32 @@ check_glibc_compatibility() {
     return 0
 }
 
+# Validate installation source and provide helpful guidance
+validate_install_source() {
+    # Check if this script is being run from the correct repository
+    if [[ "$REPO" != "fwdslsh/giv" ]]; then
+        log_error "This installation script is for repository: $REPO"
+        log_error "To install giv, please use the correct installation command:"
+        echo
+        echo "  curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh"
+        echo
+        log_error "If you meant to install a different tool, please check the documentation"
+        exit 1
+    fi
+    
+    # Detect common mistakes in the download URL
+    local script_url="${BASH_SOURCE[0]}"
+    if [[ "$script_url" == *"catalog"* ]]; then
+        log_error "It appears you're using the wrong repository URL"
+        log_error "To install giv, please use:"
+        echo
+        echo "  curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh"
+        echo
+        log_error "You used a URL containing 'catalog' - please check the documentation"
+        exit 1
+    fi
+}
+
 # Get latest release tag from GitHub
 get_latest_version() {
     local api_url="https://api.github.com/repos/${REPO}/releases/latest"
@@ -191,6 +228,9 @@ get_latest_version() {
         log_error "Failed to get latest version from GitHub API"
         log_error "This could be due to network issues or API rate limiting"
         log_error "Please specify a version with --version flag or try again later"
+        log_error ""
+        log_error "If you're using the wrong installation URL, the correct command is:"
+        echo "  curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh"
         exit 1
     fi
     
@@ -227,12 +267,30 @@ download_binary() {
     
     if command -v curl >/dev/null 2>&1; then
         if ! curl -fL --progress-bar "$download_url" -o "$temp_file"; then
-            log_error "Failed to download binary"
+            log_error "Failed to download binary from: $download_url"
+            log_error ""
+            log_error "This could be due to:"
+            log_error "  • Network connectivity issues"
+            log_error "  • Invalid version: $version"
+            log_error "  • Unsupported platform: $platform"
+            log_error "  • Using wrong installation URL"
+            log_error ""
+            log_error "Correct installation command:"
+            echo "  curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh"
             return 1
         fi
     elif command -v wget >/dev/null 2>&1; then
         if ! wget --progress=bar:force "$download_url" -O "$temp_file"; then
-            log_error "Failed to download binary"
+            log_error "Failed to download binary from: $download_url"
+            log_error ""
+            log_error "This could be due to:"
+            log_error "  • Network connectivity issues"
+            log_error "  • Invalid version: $version"
+            log_error "  • Unsupported platform: $platform"
+            log_error "  • Using wrong installation URL"
+            log_error ""
+            log_error "Correct installation command:"
+            echo "  curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh"
             return 1
         fi
     else
@@ -378,6 +436,9 @@ main() {
     if [[ -n "${GIV_FORCE:-}" ]]; then
         force=true
     fi
+    
+    # Validate installation source early
+    validate_install_source
     
     # Show banner (but not for help or dry-run)
     if [[ "$dry_run" != "true" ]]; then
