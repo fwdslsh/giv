@@ -4,6 +4,36 @@ This guide covers common issues and their solutions when installing and using gi
 
 ## Installation Issues
 
+### Wrong Installation URL
+
+**Problem:** Error like `Failed to download binary` or seeing `-e` prefixes in installation output.
+
+**Cause:** Using an incorrect repository URL in the installation command.
+
+**Symptoms:**
+- Error messages with `-e` prefixes appearing literally
+- Download failures from wrong repository
+- Script trying to install from `catalog` instead of `giv`
+
+**Solution:**
+Always use the correct installation command:
+```bash
+curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh
+```
+
+**Common Mistakes:**
+❌ `curl -fsSL https://raw.githubusercontent.com/fwdslsh/catalog/main/install.sh | sh`
+❌ `curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/master/install.sh | sh`
+❌ `curl -fsSL https://github.com/fwdslsh/giv/install.sh | sh`
+
+✅ `curl -fsSL https://raw.githubusercontent.com/fwdslsh/giv/main/install.sh | sh`
+
+**Verification:**
+After installation, verify it worked:
+```bash
+giv --version
+```
+
 ### Linux: GLIBC Version Compatibility
 
 **Problem:** Error like `GLIBC_2.XX not found` when running the binary.
