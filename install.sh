@@ -265,8 +265,8 @@ install_binary() {
     # Install binary
     log_info "Installing to: $install_path"
     if [[ "$use_sudo" == "true" ]]; then
-        sudo cp "$temp_file" "$install_path"
-        sudo chmod +x "$install_path"
+        cp "$temp_file" "$install_path"
+        chmod +x "$install_path"
     else
         cp "$temp_file" "$install_path"
         chmod +x "$install_path"
