@@ -292,6 +292,9 @@ verify_installation() {
     local version
     if ! version=$("$install_path" --version 2>/dev/null); then
         log_error "Binary does not execute correctly"
+        # write error to stdout
+        log_error "Failed to execute: $install_path"
+        result="$($install_path --version || true)"
         return 1
     fi
     
