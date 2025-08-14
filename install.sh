@@ -408,7 +408,7 @@ main() {
     log_info "Detected platform: $platform"
     
     # Check GLIBC compatibility on Linux
-    check_glibc_compatibility "$dry_run"
+    #check_glibc_compatibility "$dry_run"
     
     # Get version
     if [[ -z "$version" ]]; then
