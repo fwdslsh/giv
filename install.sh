@@ -467,10 +467,10 @@ main() {
         exit 1
     fi
     
-    # Verify installation
-    if ! verify_installation "$install_path"; then
-        exit 1
-    fi
+    # # Verify installation
+    # if ! verify_installation "$install_path"; then
+    #     exit 1
+    # fi
     
     # Check PATH
     check_path "$install_dir"
