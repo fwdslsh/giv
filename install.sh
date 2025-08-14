@@ -411,16 +411,18 @@ main() {
     #check_glibc_compatibility "$dry_run"
     
     # Get version
-    if [[ -z "${version:-}" ]]; then
+    if [[ -z "${version}" ]]; then
         log_info "Getting latest release version..."
         version=$(get_latest_version)
         if [[ -z "$version" ]]; then
             log_error "Failed to get latest version"
             exit 1
         fi
+        log_info "Installing latest version: $version"
+    else
+        log_info "Installing specified version: $version"
     fi
     
-    log_info "Installing giv version: $version"
     
     # Check existing installation
     if [[ "$force" == "false" ]]; then
