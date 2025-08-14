@@ -411,7 +411,7 @@ main() {
     #check_glibc_compatibility "$dry_run"
     
     # Get version
-    if [[ -z "$version" ]]; then
+    if [[ -z "${version:-}" ]]; then
         log_info "Getting latest release version..."
         version=$(get_latest_version)
         if [[ -z "$version" ]]; then
